@@ -4,7 +4,7 @@ import pickle
 import os
 import re
 import plotly.express as px
-from io import StringIO
+from io import StringIO, BytesIO
 import PyPDF2
 
 # =============================
@@ -12,6 +12,7 @@ import PyPDF2
 # =============================
 st.set_page_config(
     page_title="Contract Risk Analyzer",
+    page_icon="⚖️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -21,21 +22,61 @@ st.set_page_config(
 # =============================
 st.markdown("""
 <style>
+/* Main App Background and Typography */
+.stApp {
+    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Metric Cards Styling */
 [data-testid="stMetric"] {
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid rgba(128,128,128,0.3);
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: none;
+    background: var(--secondary-background-color);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+[data-testid="stMetric"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Risk Clause Cards Typography and Spacing */
 .risk-card {
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    border-left: 5px solid #ddd;
-    border: 1px solid rgba(128,128,128,0.25);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    background: var(--secondary-background-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid rgba(128,128,128,0.2);
+    transition: all 0.2s ease;
 }
-.high-risk { border-left: 5px solid #d32f2f !important; }
-.medium-risk { border-left: 5px solid #f57c00 !important; }
-.low-risk { border-left: 5px solid #388e3c !important; }
+.risk-card:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+.high-risk { border-left: 6px solid #ef4444 !important; }
+.medium-risk { border-left: 6px solid #f97316 !important; }
+.low-risk { border-left: 6px solid #22c55e !important; }
+
+/* Upload Dropzone Styling */
+[data-testid="stFileUploadDropzone"] {
+    border-radius: 16px;
+    border: 2px dashed #3b82f6;
+    background-color: rgba(59, 130, 246, 0.05);
+    padding: 30px 20px;
+    transition: all 0.3s ease;
+}
+[data-testid="stFileUploadDropzone"]:hover {
+    border-color: #2563eb;
+    background-color: rgba(59, 130, 246, 0.1);
+    transform: scale(1.01);
+}
+
+/* Customizing Streamlit Expander Header */
+.streamlit-expanderHeader {
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -88,24 +129,70 @@ def get_summary(text, limit=200):
 # Main App
 # =============================
 def main():
+    if "file_data" not in st.session_state:
+        st.session_state.file_data = None
+        st.session_state.file_name = None
+        st.session_state.file_type = None
 
     # Sidebar
     with st.sidebar:
-        st.markdown("## 📂 Upload Contract")
-        uploaded_file = st.file_uploader("Choose a PDF or TXT", type=["txt", "pdf"])
-
-        st.markdown("---")
-        st.markdown("### ⚙️ Settings")
-        confidence_threshold = st.slider("Min Confidence Score", 0.0, 1.0, 0.5, 0.05)
+        if st.session_state.file_data is not None:
+            st.markdown("### Update Document")
+            new_file = st.file_uploader("Upload a New Contract", type=["txt", "pdf"], help="Drag and drop or click to select.", key="sidebar_uploader")
+            if new_file:
+                st.session_state.file_data = new_file.getvalue()
+                st.session_state.file_name = new_file.name
+                st.session_state.file_type = new_file.type
+                st.rerun()
+            
+            st.markdown("---")
+            st.markdown("### Settings")
+            confidence_threshold = st.slider("Min Confidence Score", 0.0, 1.0, 0.5, 0.05)
+            st.markdown("---")
+            
+            if st.button("Clear Current File", use_container_width=True):
+                st.session_state.file_data = None
+                st.session_state.file_name = None
+                st.session_state.file_type = None
+                st.rerun()
+        else:
+            st.markdown("### Settings")
+            confidence_threshold = st.slider("Min Confidence Score", 0.0, 1.0, 0.5, 0.05)
 
     # Header
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.title("⚖️ Intelligent Contract Risk Analysis")
-        st.markdown("Identify hidden risks in legal documents instantly.")
-    with col2:
-        if uploaded_file:
-            st.success("Analysis Ready")
+    st.markdown("""
+        <div style='text-align: center; padding: 2rem 0 1rem 0;'>
+            <h1 style='
+                font-size: 3rem; 
+                font-weight: 800; 
+                background: linear-gradient(90deg, #3B82F6, #60A5FA, #3B82F6); 
+                -webkit-background-clip: text; 
+                -webkit-text-fill-color: transparent; 
+                margin-bottom: 0.5rem;'>
+                Intelligent Contract Risk Analysis
+            </h1>
+            <p style='color: var(--text-color); opacity: 0.8; font-size: 1.25rem; font-weight: 400;'>
+                Uncover hidden risks in legal documents instantly using AI
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    st.markdown("<hr style='width: 50%; margin: 10px auto 30px auto; border: none; border-top: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+
+    if st.session_state.file_data is None:
+        # Center File Upload
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            main_file = st.file_uploader("Upload a Contract (PDF or TXT)", type=["txt", "pdf"], help="Drag and drop or click to select.", key="main_uploader")
+            if main_file:
+                st.session_state.file_data = main_file.getvalue()
+                st.session_state.file_name = main_file.name
+                st.session_state.file_type = main_file.type
+                st.rerun()
+        
+        st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
+    else:
+        st.success(f"Analysis Ready: **{st.session_state.file_name}** - Scroll down for results")
+        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
 
     # Load Model
     model = load_model()
@@ -114,19 +201,19 @@ def main():
         st.error("⚠️ Model missing! Run training first.")
         return
 
-    if uploaded_file is not None:
+    if st.session_state.file_data is not None:
 
         # Read File
         text = ""
         try:
-            if uploaded_file.type == "application/pdf":
-                reader = PyPDF2.PdfReader(uploaded_file)
+            if st.session_state.file_type == "application/pdf":
+                reader = PyPDF2.PdfReader(BytesIO(st.session_state.file_data))
                 for page in reader.pages:
                     extracted = page.extract_text()
                     if extracted:
                         text += extracted + "\n"
             else:
-                stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+                stringio = StringIO(st.session_state.file_data.decode("utf-8"))
                 text = stringio.read()
         except Exception as e:
             st.error(f"Error reading file: {e}")
@@ -209,7 +296,7 @@ def main():
                     color="Risk Level",
                     nbins=20,
                     color_discrete_map={
-                        "High": "#085566",
+                       "High": "#085566",
                         "Medium": "#440866",
                         "Low": "#085566"
                     }
@@ -236,7 +323,7 @@ def main():
                     y="Risk_Score",
                     color="Risk Level",
                     color_discrete_map={
-                       "High": "#085566",
+                        "High": "#085566",
                         "Medium": "#440866",
                         "Low": "#085566"
                     },
@@ -325,9 +412,10 @@ def main():
 
     else:
         st.markdown("""
-        <div style="text-align: center; padding: 50px; color: #888;">
-            <h3>👋 Welcome to Intelligent Contract Analysis</h3>
-            <p>Upload a contract to get started.</p>
+        <div style="text-align: center; padding: 60px; font-family: 'Inter', sans-serif;">
+            <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.4;">📄</div>
+            <h3 style="font-weight: 500; color: var(--text-color); opacity: 0.8;">Awaiting document upload</h3>
+            <p style="font-size: 1.1rem; color: var(--text-color); opacity: 0.6;">Please upload a contract to begin the analysis.</p>
         </div>
         """, unsafe_allow_html=True)
 
