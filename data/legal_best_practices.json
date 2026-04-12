@@ -1,0 +1,98 @@
+[
+  {
+    "id": "term-01",
+    "topic": "termination",
+    "title": "Balanced termination for cause and convenience",
+    "text": "Fair termination clauses typically require material breach and a cure period before termination for cause, cap liability for early exit where termination for convenience is allowed, and require reasonable written notice (often 30–90 days) for convenience termination. Mutual termination rights and clear survival of confidentiality, IP, and indemnity obligations are standard."
+  },
+  {
+    "id": "term-02",
+    "topic": "termination",
+    "title": "Post-termination obligations",
+    "text": "Best practice: specify return of materials, deletion of data where required, and transition assistance for a limited period. Avoid indefinite ongoing duties unless narrowly scoped and compensated."
+  },
+  {
+    "id": "indem-01",
+    "topic": "indemnification",
+    "title": "Carve-outs and caps",
+    "text": "Indemnities are often narrowed to third-party claims arising from a party’s breach, negligence, or willful misconduct, with exclusions for the indemnitee’s sole negligence. Caps, baskets, or time limits may apply except for confidentiality breaches, IP infringement, or gross misconduct where parties sometimes carve out uncapped liability."
+  },
+  {
+    "id": "indem-02",
+    "topic": "indemnification",
+    "title": "Defense and control",
+    "text": "Standard language addresses who controls the defense, cooperation duties, and settlement authority. One-sided unlimited indemnities for broad categories are treated as high risk in commercial negotiations."
+  },
+  {
+    "id": "liab-01",
+    "topic": "limitation_of_liability",
+    "title": "Consequential damages waiver with exceptions",
+    "text": "Commercial agreements often exclude indirect and consequential damages while carving out breaches of confidentiality, indemnity obligations, gross negligence, willful misconduct, or death/personal injury. Liability may be capped at fees paid in the prior 12 months unless a higher cap is negotiated for material services."
+  },
+  {
+    "id": "liab-02",
+    "topic": "limitation_of_liability",
+    "title": "Super cap / fundamental terms",
+    "text": "Where a cap exists, best practice is to identify a short list of fundamental obligations (e.g., payment, IP assignment, data protection) that either use a higher cap or are excluded from the general cap."
+  },
+  {
+    "id": "conf-01",
+    "topic": "confidentiality",
+    "title": "Definition and residual knowledge",
+    "text": "Confidential information should be defined with standard exceptions (public domain, independently developed, rightfully received). Residuals clauses are disfavored in many buyer-side playbooks; if included, they should be narrow and symmetric."
+  },
+  {
+    "id": "conf-02",
+    "topic": "confidentiality",
+    "title": "Duration and return",
+    "text": "Obligations commonly survive 3–5 years or indefinitely for trade secrets. Return or destruction of information upon request or termination is standard, with limited retention for legal compliance."
+  },
+  {
+    "id": "ip-01",
+    "topic": "intellectual_property",
+    "title": "Ownership of deliverables",
+    "text": "Work-for-hire or explicit assignment of IP in deliverables, with a license back for vendor tools and pre-existing materials, is common. Background IP remains with the originating party under a license."
+  },
+  {
+    "id": "ip-02",
+    "topic": "intellectual_property",
+    "title": "Feedback and improvements",
+    "text": "Broad assignment of ‘feedback’ or all improvements can be high risk for the disclosing party. Narrow feedback licenses or mutual improvement clauses are often preferred."
+  },
+  {
+    "id": "pay-01",
+    "topic": "payment",
+    "title": "Invoicing and late fees",
+    "text": "Net-30 payment terms, dispute rights for good-faith contested invoices, and late interest at a lawful rate are typical. Penalties unrelated to actual costs may be scrutinized."
+  },
+  {
+    "id": "pay-02",
+    "topic": "payment",
+    "title": "Audit rights",
+    "text": "Audit rights should be limited in frequency, notice, scope, and confidentiality of findings, often with cost allocation if no material underpayment is found."
+  },
+  {
+    "id": "rep-01",
+    "topic": "representations_warranties",
+    "title": "Knowledge and materiality qualifiers",
+    "text": "Representations are often qualified by materiality, knowledge (defined), and disclosure schedules. ‘Sandbagging’ provisions vary by jurisdiction and should be intentional if included."
+  },
+  {
+    "id": "force-01",
+    "topic": "force_majeure",
+    "title": "Notice and mitigation",
+    "text": "Force majeure clauses should require prompt notice, reasonable mitigation, and termination rights only for prolonged inability to perform (e.g., 30–60+ days)."
+  },
+  {
+    "id": "data-01",
+    "topic": "data_protection",
+    "title": "Roles and subprocessors",
+    "text": "Clarify controller/processor roles, subprocessors, security measures, breach notification timelines, and data return/deletion aligned with applicable privacy law."
+  },
+  {
+    "id": "general-01",
+    "topic": "general",
+    "title": "Order of precedence and amendment",
+    "text": "When multiple documents apply, an order of precedence clause reduces ambiguity. Amendments should be in writing and signed by both parties."
+  }
+]
