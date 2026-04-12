@@ -328,9 +328,9 @@ def _render_agentic_panel(raw_text: str, threshold: float, mode: str):
 
     is_online  = mode == "online"
     badge_cls  = "badge-online"  if is_online else "badge-offline"
-    badge_lbl  = "🌐 Online — OpenRouter" if is_online else "🖥 Offline — Ollama"
-    model_name = (os.environ.get("OPENROUTER_MODEL","openai/gpt-oss-120b")
-                  if is_online else os.environ.get("OLLAMA_MODEL","qwen3.5:2b"))
+    badge_lbl  = "🌐 Online" if is_online else "🖥 Offline"
+    # model_name is only used internally for ollama model selection dropdown
+    _local_model = os.environ.get("OLLAMA_MODEL", "qwen3.5:2b")
 
     # ── Guard checks ──────────────────────────────────────────────────────────
     if is_online and not os.environ.get("OPENROUTER_API_KEY","").strip():
@@ -346,21 +346,25 @@ def _render_agentic_panel(raw_text: str, threshold: float, mode: str):
     # ── Welcome card (shown before any run) ───────────────────────────────────
     report_key = f"report_{mode}"
     if report_key not in st.session_state:
+        # Check cloud status
+        from contract_agent.cloud_client import check_cloud_health
+        health = check_cloud_health()
+        groq_tag = " + Groq Fallback" if health["groq"] else ""
+
+        reliability = (
+            "⚡ Dual-provider reliability — an automatic fallback is ready if the primary is unavailable."
+            if health.get("groq") else
+            "⚡ Cloud AI is ready to analyse your contract."
+        )
         st.markdown(f"""
         <div class="welcome-card">
             <h3 style="margin:0 0 6px 0;">👋 Your AI Legal Assistant is Ready</h3>
-            <span class="{badge_cls}">{badge_lbl}</span>&nbsp;&nbsp;
-            <span style="opacity:.7; font-size:.9rem;">Model: <code>{model_name}</code></span>
+            <span class="{badge_cls}">{badge_lbl}</span>
             <p style="margin:16px 0 8px 0; opacity:.85; font-size:1rem;">
                 I will scan every clause in your contract, explain what it means in plain English,
                 flag what could go wrong, and suggest a safer alternative — grounded in legal best practices.
             </p>
-            <p style="margin:0; opacity:.65; font-size:.9rem;">
-                ⚡ <strong>How it works:</strong>
-                &nbsp;①&nbsp;ML model classifies each clause
-                &nbsp;→&nbsp;②&nbsp;RAG retrieves legal guidelines
-                &nbsp;→&nbsp;③&nbsp;AI explains risk &amp; rewrites
-            </p>
+            <p style="margin:0; opacity:.65; font-size:.9rem;">{reliability}</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -379,8 +383,7 @@ The LLM only reasons about *retrieved* content — no hallucinated citations.
             """)
 
     # ── Run button ────────────────────────────────────────────────────────────
-    btn_lbl = ("🚀 Run AI Risk Analysis (OpenRouter)" if is_online
-               else f"🖥 Run AI Risk Analysis (Ollama — {model_name})")
+    btn_lbl = "🚀 Run AI Risk Analysis" if is_online else "🖥 Run AI Risk Analysis (Local)"
 
     if st.button(btn_lbl, type="primary", use_container_width=True, key=f"run_{mode}"):
         # Clear previous report
@@ -422,11 +425,12 @@ The LLM only reasons about *retrieved* content — no hallucinated citations.
             st.write(f"   ✅ Retrieved guidelines for all {len(researched)} clauses")
 
             # Step 3 — LLM Reasoning (per clause)
-            st.write(f"🤖 **Step 3 / 3** — AI reasoning via **{model_name}**…")
-            st.caption("This is the slowest step — each clause is sent to the LLM individually.")
+            backend_label = "Cloud AI" if is_online else "Local AI"
+            st.write(f"🤖 **Step 3 / 3** — AI reasoning via **{backend_label}**…")
+            st.caption("This is the slowest step — each clause is sent to the AI individually.")
 
             if is_online:
-                from contract_agent.openrouter_client import analyze_clause_with_openrouter as _analyze
+                from contract_agent.cloud_client import analyze_clause_with_cloud as _analyze
             else:
                 from contract_agent.ollama_client import analyze_clause_with_ollama as _analyze
 
@@ -511,35 +515,34 @@ def main():
         st.markdown("#### 🤖 AI Mode")
         mode_choice = st.radio(
             "Select inference backend:",
-            ["🌐 Online (OpenRouter)", "🖥 Offline (Ollama)"],
+            ["🌐 Online", "🖥 Offline"],
             index=0, key="mode_radio",
-            help="Online uses OpenRouter cloud API. Offline uses your local Ollama — no internet needed.",
+            help="Online uses cloud AI (no setup needed). Offline runs on your local machine — no internet required.",
         )
         selected_mode = "online" if "Online" in mode_choice else "offline"
 
-        # Status indicators
+        # Status indicators — no model names shown
         if selected_mode == "online":
-            api_key    = os.environ.get("OPENROUTER_API_KEY","").strip()
-            model_name = os.environ.get("OPENROUTER_MODEL","openai/gpt-oss-120b")
-            if api_key:
-                st.success(f"🟢 API Key set\n`{model_name}`")
+            from contract_agent.cloud_client import check_cloud_health
+            health = check_cloud_health()
+            if health["openrouter"]:
+                st.success("🟢 **Cloud AI — Ready**")
             else:
-                st.warning("🔴 `OPENROUTER_API_KEY` not set")
+                st.warning("🔴 **Cloud API key missing**")
         else:
-            with st.spinner("Checking Ollama…"):
+            with st.spinner("Checking local AI…"):
                 h = _ollama_health()
             if h["reachable"]:
-                auto = " _(auto-started)_" if h.get("auto_started") else ""
-                st.success(f"🟢 Ollama ready{auto}\nModel: `{h['model']}`")
+                st.success("🟢 **Local AI — Ready**")
                 avail = h.get("available_models",[])
                 if len(avail) > 1:
-                    chosen = st.selectbox("Choose model:", avail,
+                    chosen = st.selectbox("Local model:", avail,
                         index=avail.index(h["model"]) if h["model"] in avail else 0,
                         key="ollama_model_select")
                     os.environ["OLLAMA_MODEL"] = chosen
             else:
-                st.error("🔴 Ollama not reachable")
-                st.caption("Run `ollama serve` then refresh.")
+                st.error("🔴 Local AI not reachable")
+                st.caption("Run `ollama serve` in a terminal, then refresh.")
 
         st.markdown("---")
 

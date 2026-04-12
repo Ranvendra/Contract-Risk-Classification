@@ -5,7 +5,7 @@ from langgraph.graph import END, START, StateGraph
 
 from contract_agent.kb_retriever import LegalPracticeRetriever
 from contract_agent.ml_utils import load_sklearn_pipeline
-from contract_agent.openrouter_client import analyze_clause_with_openrouter
+from contract_agent.cloud_client import analyze_clause_with_cloud
 from contract_agent.ollama_client import analyze_clause_with_ollama
 from contract_agent._shared_prompt import safe_parse_analysis
 from contract_agent.report import (
@@ -113,7 +113,7 @@ def _reason_node(state: AgentState) -> dict[str, Any]:
                     row.get("best_practices", []),
                 )
             else:
-                analysis = analyze_clause_with_openrouter(
+                analysis = analyze_clause_with_cloud(
                     row["clause_text"],
                     str(row["risk_level"]),
                     float(row["confidence"]),
