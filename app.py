@@ -333,8 +333,12 @@ def _render_agentic_panel(raw_text: str, threshold: float, mode: str):
     _local_model = os.environ.get("OLLAMA_MODEL", "qwen3.5:2b")
 
     # ── Guard checks ──────────────────────────────────────────────────────────
-    if is_online and not os.environ.get("OPENROUTER_API_KEY","").strip():
-        st.warning("⚠️ Set `OPENROUTER_API_KEY` in your `.env` file to use Online mode.")
+    or_key_set = (
+        os.environ.get("OPENROUTER_API_KEY_1", "").strip()
+        or os.environ.get("OPENROUTER_API_KEY_2", "").strip()
+    )
+    if is_online and not or_key_set and not os.environ.get("GROQ_API_KEY", "").strip():
+        st.warning("⚠️ No cloud API keys found. Add `OPENROUTER_API_KEY_1` or `GROQ_API_KEY` to your `.env` file.")
         return
     if not is_online:
         h = _ollama_health()
