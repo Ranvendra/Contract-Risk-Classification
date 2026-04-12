@@ -1,17 +1,22 @@
 """
-Unified Cloud LLM Client with Fallback Logic.
-Primary: OpenRouter (gpt-oss-120b)
-Secondary: Groq (llama-3.3-70b-versatile)
+Unified Cloud LLM Client — 3-level fallback chain.
 
-This ensures the system stays online even if the primary provider fails.
+Priority order:
+  1. OpenRouter Key 1  (OPENROUTER_API_KEY_1)
+  2. OpenRouter Key 2  (OPENROUTER_API_KEY_2)
+  3. Groq              (GROQ_API_KEY)
+
+Each provider is tried in order. The first one that succeeds returns the result.
+The pipeline never fails as long as at least one key is valid.
 """
 from __future__ import annotations
 
-import os
 import logging
+import os
 from typing import Any
 
 from openai import OpenAI
+
 from contract_agent._shared_prompt import (
     build_system_prompt,
     build_user_message,
@@ -20,6 +25,55 @@ from contract_agent._shared_prompt import (
 
 logger = logging.getLogger(__name__)
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Internal: single-provider call
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _call_openrouter(api_key: str, model: str, system: str, user: str) -> str:
+    """Returns raw LLM response string. Raises on any error."""
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+    )
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user",   "content": user},
+        ],
+        temperature=0.15,
+        max_tokens=1800,
+        response_format={"type": "json_object"},
+        timeout=60.0,
+    )
+    return completion.choices[0].message.content or "{}"
+
+
+def _call_groq(api_key: str, model: str, system: str, user: str) -> str:
+    """Returns raw LLM response string. Raises on any error."""
+    client = OpenAI(
+        base_url="https://api.groq.com/openai/v1",
+        api_key=api_key,
+    )
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user",   "content": user},
+        ],
+        temperature=0.15,
+        max_tokens=1500,
+        response_format={"type": "json_object"},
+        timeout=30.0,
+    )
+    return completion.choices[0].message.content or "{}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Public: main analysis function with 3-level fallback
+# ─────────────────────────────────────────────────────────────────────────────
+
 def analyze_clause_with_cloud(
     clause_text: str,
     risk_label: str,
@@ -27,83 +81,73 @@ def analyze_clause_with_cloud(
     best_practices: list[dict[str, Any]],
 ) -> dict[str, str]:
     """
-    Attempts analysis using OpenRouter. If it fails, falls back to Groq.
-    Returns the standard 8-key analysis dictionary.
+    Analyses a clause using cloud LLMs with automatic failover:
+      1. OpenRouter Key 1  → 2. OpenRouter Key 2  → 3. Groq
+
+    Returns the standard 8-key analysis dict.
     """
-    
-    # ── Attempt 1: OpenRouter ──────────────────────────────────────────────
-    or_api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-    or_model = os.environ.get("OPENROUTER_MODEL", "openai/gpt-oss-120b").strip()
-    
-    if or_api_key:
+    or_model    = os.environ.get("OPENROUTER_MODEL", "openai/gpt-oss-120b").strip()
+    groq_model  = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile").strip()
+
+    or_key_1    = os.environ.get("OPENROUTER_API_KEY_1", "").strip()
+    or_key_2    = os.environ.get("OPENROUTER_API_KEY_2", "").strip()
+    groq_key    = os.environ.get("GROQ_API_KEY", "").strip()
+
+    system = build_system_prompt(risk_label, confidence)
+    user   = build_user_message(clause_text, best_practices)
+
+    # ── Attempt 1: OpenRouter Key 1 ───────────────────────────────────────────
+    if or_key_1:
         try:
-            client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=or_api_key,
-            )
-            
-            completion = client.chat.completions.create(
-                model=or_model,
-                messages=[
-                    {"role": "system", "content": build_system_prompt(risk_label, confidence)},
-                    {"role": "user",   "content": build_user_message(clause_text, best_practices)},
-                ],
-                temperature=0.15,
-                max_tokens=1800,
-                response_format={"type": "json_object"},
-                timeout=60.0, # 1 minute timeout for primary
-            )
-            
-            raw = completion.choices[0].message.content or "{}"
+            raw = _call_openrouter(or_key_1, or_model, system, user)
+            logger.info("✅ OpenRouter Key 1 succeeded.")
             return safe_parse_analysis(raw, fallback_text=clause_text[:200])
-            
         except Exception as exc:
-            logger.warning(f"OpenRouter failed: {exc}. Falling back to Groq...")
-    
-    # ── Attempt 2: Groq Fallback ───────────────────────────────────────────
-    groq_api_key = os.environ.get("GROQ_API_KEY", "").strip()
-    groq_model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile").strip()
-    
-    if groq_api_key:
+            logger.warning(f"⚠️  OpenRouter Key 1 failed: {exc}")
+
+    # ── Attempt 2: OpenRouter Key 2 ───────────────────────────────────────────
+    if or_key_2:
         try:
-            client = OpenAI(
-                base_url="https://api.groq.com/openai/v1",
-                api_key=groq_api_key,
-            )
-            
-            completion = client.chat.completions.create(
-                model=groq_model,
-                messages=[
-                    {"role": "system", "content": build_system_prompt(risk_label, confidence)},
-                    {"role": "user",   "content": build_user_message(clause_text, best_practices)},
-                ],
-                temperature=0.15,
-                max_tokens=1500, # Groq usually has slightly smaller context windows for JSON mode
-                response_format={"type": "json_object"},
-                timeout=30.0, # 30s timeout for fallback
-            )
-            
-            raw = completion.choices[0].message.content or "{}"
-            parsed = safe_parse_analysis(raw, fallback_text=clause_text[:200])
-            # Add a small note to the summary indicating fallback was used
-            if "plain_english_summary" in parsed:
-                parsed["plain_english_summary"] += " [Analysis provided by Fallback Provider (Groq)]"
-            return parsed
-            
+            raw = _call_openrouter(or_key_2, or_model, system, user)
+            logger.info("✅ OpenRouter Key 2 succeeded (Key 1 fallback).")
+            return safe_parse_analysis(raw, fallback_text=clause_text[:200])
         except Exception as exc:
-            logger.error(f"Groq fallback failed: {exc}")
-    
-    # ── Final Fallback: Error string in analysis shape ──────────────────────
-    error_msg = "Cloud analysis failed across all providers."
-    if not or_api_key and not groq_api_key:
-        error_msg = "No Cloud API keys (OpenRouter/Groq) found in .env."
-        
+            logger.warning(f"⚠️  OpenRouter Key 2 failed: {exc}")
+
+    # ── Attempt 3: Groq ───────────────────────────────────────────────────────
+    if groq_key:
+        try:
+            raw = _call_groq(groq_key, groq_model, system, user)
+            logger.info("✅ Groq succeeded (final fallback).")
+            return safe_parse_analysis(raw, fallback_text=clause_text[:200])
+        except Exception as exc:
+            logger.error(f"❌ Groq fallback failed: {exc}")
+
+    # ── All failed ────────────────────────────────────────────────────────────
+    configured = [k for k, v in {
+        "OpenRouter Key 1": or_key_1,
+        "OpenRouter Key 2": or_key_2,
+        "Groq": groq_key,
+    }.items() if v]
+
+    error_msg = (
+        f"All cloud providers failed. Tried: {', '.join(configured) or 'none configured'}."
+        if configured else "No cloud API keys configured in .env."
+    )
+    logger.error(error_msg)
     return safe_parse_analysis("{}", fallback_text=error_msg)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Health check — used by Streamlit sidebar
+# ─────────────────────────────────────────────────────────────────────────────
+
 def check_cloud_health() -> dict[str, bool]:
-    """Simple check to see if keys are configured."""
+    """Returns which providers are configured (key present in env)."""
     return {
-        "openrouter": bool(os.environ.get("OPENROUTER_API_KEY", "").strip()),
+        "openrouter": bool(
+            os.environ.get("OPENROUTER_API_KEY_1", "").strip()
+            or os.environ.get("OPENROUTER_API_KEY_2", "").strip()
+        ),
         "groq": bool(os.environ.get("GROQ_API_KEY", "").strip()),
     }
