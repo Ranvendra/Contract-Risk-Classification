@@ -689,15 +689,24 @@ def main():
                 if st.button("Rebuild Database", use_container_width=True):
                     from rag_setup import build_vector_db
                     with st.spinner("Processing..."):
-                        build_vector_db(reset=True)
-                    st.rerun()
+                        try:
+                            build_vector_db(reset=True)
+                            st.rerun()
+                        except Exception as _e:
+                            st.error(f"❌ Rebuild failed: {_e}")
             else:
                 st.warning("Not initialized")
                 if st.button("Build Knowledge Base", use_container_width=True):
                     from rag_setup import build_vector_db
                     with st.spinner("Processing..."):
-                        build_vector_db()
-                    st.rerun()
+                        try:
+                            build_vector_db()
+                            st.rerun()
+                        except Exception as _e:
+                            st.error(
+                                f"❌ ChromaDB setup failed: {_e}\n\n"
+                                "The app will use TF-IDF retrieval as a fallback."
+                            )
 
             st.markdown("---")
             st.markdown("**Risk Sensitivity**")
