@@ -279,7 +279,7 @@ def _render_ml_dashboard(df: pd.DataFrame, domain: str):
         words = re.findall(r"\b\w+\b",
             " ".join(df[df["Risk Level"] == "High"]["Clause Text"].tolist()).lower())
         stops = {"the","and","to","of","in","a","is","that","for","it","on","be",
-                 "as","by","or","this","an","are","with","from","at","not","will"}
+                "as","by","or","this","an","are","with","from","at","not","will"}
         filtered = Counter(w for w in words if w not in stops and len(w) > 3).most_common(10)
         if filtered:
             kw = pd.DataFrame(filtered, columns=["Keyword", "Count"])
