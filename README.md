@@ -98,21 +98,17 @@ git clone https://github.com/your-username/Contract-Risk-Classification.git
 cd Contract-Risk-Classification
 ```
 
-### 2. Install dependencies
+### 2. Auto-Install & Run Application
+
+We have implemented an automated startup script that will automatically create a secure Python virtual environment, download all necessary dependencies without throwing errors, and launch the UI.
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
-pip install -r requirements.txt
+# Make the script executable securely and run it:
+chmod +x run_app.sh
+./run_app.sh
 ```
 
-### 3. Run the Application
-
-The pre-trained model is saved within the `models/` directory.
-
-```bash
-streamlit run app.py
-```
+*The script manages `requirements.txt` dynamically. If you prefer to manually install, use `pip install -r requirements.txt` followed by `streamlit run app.py`.*
 
 _Note: A live deployed version link will be generated via HuggingFace Spaces/Streamlit Community Cloud for final submission._
 
