@@ -31,7 +31,6 @@ _COLLECTION_NAME = "legal_guidelines"
 # ChromaDB collection loader (cached once per process)
 # ─────────────────────────────────────────────────────────────────────────────
 
-@lru_cache(maxsize=1)
 def _get_chroma_collection():
     """
     Returns the ChromaDB collection or None if unavailable.

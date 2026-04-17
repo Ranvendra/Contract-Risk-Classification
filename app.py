@@ -660,8 +660,24 @@ def main():
 
         # RAG status
         st.markdown("#### Knowledge Base Status")
-        st.markdown(_rag_status_html(), unsafe_allow_html=True)
-        st.caption("Run setup scripts to rebuild.")
+        from contract_agent.kb_retriever import _get_chroma_collection
+        col = _get_chroma_collection()
+        
+        if col is not None:
+            st.markdown(_rag_status_html(), unsafe_allow_html=True)
+            if st.button("Rebuild Database", use_container_width=True, help="Update the vector store with new guidelines."):
+                from rag_setup import build_vector_db
+                with st.spinner("Rebuilding Knowledge Base..."):
+                    build_vector_db(reset=True)
+                st.rerun()
+        else:
+            st.warning("Knowledge Base Missing")
+            st.info("ChromaDB is not initialized. Run the setup below to enable high-precision RAG analysis.")
+            if st.button("🚀 Build Knowledge Base", type="primary", use_container_width=True):
+                from rag_setup import build_vector_db
+                with st.spinner("Building Knowledge Base... (this may take 30-60s)"):
+                    build_vector_db()
+                st.rerun()
 
         st.markdown("---")
 
