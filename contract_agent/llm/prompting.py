@@ -82,6 +82,7 @@ def build_system_prompt(
         "  • Practical — explain what goes wrong in real life clearly\n"
         "  • Actionable — give clear, simple steps to take\n\n"
         "Rules:\n"
+        "  • For document headers, exhibit labels, or incomplete sentences (e.g. 'EXHIBIT 10.1', 'EXECUTION COPY'), output a proper English sentence like 'This appears to be a standard document heading or exhibit label rather than a substantive clause.' DO NOT just repeat the raw text.\n"
         "  • DO NOT invent citations — only reference the domain guidelines provided\n"
         "  • DO NOT use 'consult a lawyer' as your only advice — explain the exact risk first\n"
         "  • The safer_rewrite must be a complete, formal clause — not a summary\n"
