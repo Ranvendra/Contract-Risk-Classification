@@ -17,7 +17,7 @@ from typing import Any
 
 from openai import OpenAI
 
-from contract_agent._shared_prompt import (
+from contract_agent.llm.prompting import (
     build_system_prompt,
     build_user_message,
     safe_parse_analysis,

@@ -1,5 +1,5 @@
 """
-contract_agent/report.py — Report Builder
+contract_agent/core/report.py — Component Logic
 =========================================
 
 Converts clause assessments into two output formats:

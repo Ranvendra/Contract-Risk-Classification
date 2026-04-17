@@ -1,5 +1,5 @@
 """
-contract_agent/workflow.py — LangGraph Agent Pipeline (Milestone 2)
+contract_agent/contract_agent/workflow.py — Component Logic
 ====================================================================
 
 Graph topology:
@@ -16,45 +16,29 @@ State is a typed dict passed immutably between nodes.
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any, Literal, TypedDict
+from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
-from contract_agent.domain_detector import detect_domain
-from contract_agent.kb_retriever    import DomainAwareRetriever
-from contract_agent.ml_utils        import load_sklearn_pipeline
-from contract_agent.cloud_client    import analyze_clause_with_cloud
-from contract_agent.ollama_client   import analyze_clause_with_ollama
-from contract_agent._shared_prompt  import safe_parse_analysis
-from contract_agent.report import (
-    DISCLAIMER,
-    build_structured_report,
-    render_markdown_report,
-)
-from contract_agent.text_utils import clean_text, get_summary, segment_clauses
-
-Mode = Literal["online", "offline"]
+from contract_agent.core.state import AgentState, Mode
 
 # Maximum characters per clause chunk sent to the LLM
 _MAX_CLAUSE_CHARS = 2000
 
+from contract_agent.core.domain import detect_domain
+from contract_agent.retrieval.chroma    import DomainAwareRetriever
+from contract_agent.utils.ml        import load_sklearn_pipeline
+from contract_agent.llm.cloud    import analyze_clause_with_cloud
+from contract_agent.llm.local   import analyze_clause_with_ollama
+from contract_agent.llm.prompting  import safe_parse_analysis
+from contract_agent.core.report import (
+    DISCLAIMER,
+    build_structured_report,
+    render_markdown_report,
+)
+from contract_agent.utils.text import clean_text, get_summary, segment_clauses
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Agent State
-# ─────────────────────────────────────────────────────────────────────────────
 
-class AgentState(TypedDict, total=False):
-    raw_text:             str
-    domain:               str               # detected contract domain
-    confidence_threshold: float
-    mode:                 str               # "online" | "offline"
-    contract_overview:    str
-    flagged_clauses:      list[dict[str, Any]]   # High + Medium only
-    researched:           list[dict[str, Any]]
-    clause_assessments:   list[dict[str, Any]]
-    structured_report:    dict[str, Any]
-    markdown_report:      str
-    error:                str | None
 
 
 # ─────────────────────────────────────────────────────────────────────────────

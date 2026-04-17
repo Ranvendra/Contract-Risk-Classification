@@ -1,5 +1,5 @@
 """
-contract_agent/_tfidf_retriever.py — TF-IDF Fallback Retriever
+contract_agent/retrieval/tfidf.py — Component Logic
 ===============================================================
 
 Backup retriever using the existing data/legal_best_practices.json.
@@ -40,7 +40,7 @@ def _infer_topic_hint(text: str) -> str | None:
 
 @lru_cache(maxsize=1)
 def _load_kb_records() -> list[dict]:
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     path = os.path.join(base_dir, "data", "legal_best_practices.json")
     with open(path, encoding="utf-8") as f:
         return json.load(f)

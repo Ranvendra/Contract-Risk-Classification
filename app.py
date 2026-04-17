@@ -9,8 +9,8 @@ import PyPDF2
 import streamlit as st
 from dotenv import load_dotenv
 
-from contract_agent.domain_detector import DOMAIN_META, detect_domain, get_domain_badge_html
-from contract_agent.text_utils import clean_text, get_summary, segment_clauses
+from contract_agent.core.domain import DOMAIN_META, detect_domain, get_domain_badge_html
+from contract_agent.utils.text import clean_text, get_summary, segment_clauses
 
 load_dotenv()
 
@@ -201,13 +201,14 @@ details.custom-expander[open] summary .expand-icon {
 # ─────────────────────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_model():
-    from contract_agent.ml_utils import load_sklearn_pipeline
+    # Cache busted!
+    from contract_agent.utils.ml import load_sklearn_pipeline
     return load_sklearn_pipeline()
 
 
 @st.cache_data(ttl=30)
 def _ollama_health():
-    from contract_agent.ollama_client import check_ollama_health
+    from contract_agent.llm.local import check_ollama_health
     return check_ollama_health()
 
 
@@ -219,7 +220,7 @@ def _detect_domain_cached(text_sample: str) -> str:
 
 def _rag_status_html() -> str:
     """Return an HTML pill showing whether ChromaDB or TF-IDF is active."""
-    from contract_agent.kb_retriever import _get_chroma_collection
+    from contract_agent.retrieval.chroma import _get_chroma_collection
     col = _get_chroma_collection()
     if col is not None:
         count = col.count()
@@ -392,9 +393,9 @@ def _render_agentic_panel(
       Step C        — "Analyze with AI" trigger button
       Step D        — Interactive streaming master-detail workflow
     """
-    from contract_agent.kb_retriever import LegalPracticeRetriever
-    from contract_agent.ml_utils import load_sklearn_pipeline
-    from contract_agent._shared_prompt import safe_parse_analysis
+    from contract_agent.retrieval.chroma import LegalPracticeRetriever
+    from contract_agent.utils.ml import load_sklearn_pipeline
+    from contract_agent.llm.prompting import safe_parse_analysis
 
     is_online = mode == "online"
     badge_cls = "badge-online" if is_online else "badge-offline"
@@ -416,7 +417,7 @@ def _render_agentic_panel(
 
     # ── Step C: Trigger button ──────────────────────────────────────────────
     if cur_state == "initial":
-        from contract_agent.cloud_client import check_cloud_health
+        from contract_agent.llm.cloud import check_cloud_health
         health   = check_cloud_health()
         groq_tag = " + Groq fallback" if health.get("groq") else ""
 
@@ -440,8 +441,8 @@ def _render_agentic_panel(
                 return
 
             with st.spinner("Preparing Document Clauses..."):
-                from contract_agent.text_utils import segment_clauses, clean_text
-                from contract_agent.kb_retriever import DomainAwareRetriever
+                from contract_agent.utils.text import segment_clauses, clean_text
+                from contract_agent.retrieval.chroma import DomainAwareRetriever
 
                 clauses  = segment_clauses(raw_text)
                 retriever = DomainAwareRetriever(top_k=3)
@@ -543,7 +544,7 @@ def _render_agentic_panel(
                 st.markdown(f"**Risk Bearer:** {an.get('who_bears_the_risk', 'Unknown')} &nbsp;|&nbsp; **ML Risk:** {risk} &nbsp;|&nbsp; **Action:** {an.get('action_required', 'Review')}")
                 st.markdown("---")
                 
-                from contract_agent.text_utils import get_summary
+                from contract_agent.utils.text import get_summary
                 summary_text = get_summary(cur["clause_text"], 150)
                 
                 st.markdown("##### 📝 What It Says")
@@ -578,9 +579,9 @@ def _render_agentic_panel(
             row = queue.pop(0)
             
             if is_online:
-                from contract_agent.cloud_client import analyze_clause_with_cloud as _analyze
+                from contract_agent.llm.cloud import analyze_clause_with_cloud as _analyze
             else:
-                from contract_agent.ollama_client import analyze_clause_with_ollama as _analyze
+                from contract_agent.llm.local import analyze_clause_with_ollama as _analyze
 
             try:
                 analysis = _analyze(
@@ -630,7 +631,7 @@ def main():
 
         # Provider status (Pollinations is always available free)
         if selected_mode == "online":
-            from contract_agent.cloud_client import check_cloud_health
+            from contract_agent.llm.cloud import check_cloud_health
             health = check_cloud_health()
             if health.get("pollinations"):
                 st.success("Cloud Models (Free Tier) — Ready")
@@ -660,7 +661,7 @@ def main():
 
         # RAG status
         st.markdown("#### Knowledge Base Status")
-        from contract_agent.kb_retriever import _get_chroma_collection
+        from contract_agent.retrieval.chroma import _get_chroma_collection
         col = _get_chroma_collection()
         
         if col is not None:

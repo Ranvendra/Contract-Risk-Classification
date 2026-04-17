@@ -1,5 +1,5 @@
 """
-contract_agent/_shared_prompt.py — Shared Prompt Builder
+contract_agent/llm/prompting.py — Component Logic
 =========================================================
 
 Centralises all prompt construction so both cloud and local LLM clients

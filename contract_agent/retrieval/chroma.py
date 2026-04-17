@@ -1,5 +1,5 @@
 """
-contract_agent/kb_retriever.py — Domain-Aware ChromaDB RAG Retriever
+contract_agent/retrieval/chroma.py — Component Logic
 =====================================================================
 
 Primary retriever queries the ChromaDB vector store built by rag_setup.py.
@@ -11,7 +11,7 @@ Fallback chain:
   3. TF-IDF over legal_best_practices.json  (if ChromaDB unavailable)
 
 Usage:
-    from contract_agent.kb_retriever import DomainAwareRetriever
+    from contract_agent.retrieval.chroma import DomainAwareRetriever
 
     retriever = DomainAwareRetriever(top_k=3)
     results   = retriever.retrieve(clause_text="...", domain="Employment")
@@ -22,7 +22,7 @@ import os
 from functools import lru_cache
 from typing import Any
 
-_BASE_DIR      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_BASE_DIR      = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _CHROMA_DB_PATH = os.path.join(_BASE_DIR, "data", "chroma_db")
 _COLLECTION_NAME = "legal_guidelines"
 
@@ -144,7 +144,7 @@ class DomainAwareRetriever:
 
     def _tfidf_retrieve(self, clause_text: str) -> list[dict[str, Any]]:
         if self._tfidf is None:
-            from contract_agent._tfidf_retriever import TFIDFRetriever
+            from contract_agent.retrieval.tfidf import TFIDFRetriever
             self._tfidf = TFIDFRetriever(top_k=self.top_k)
         return self._tfidf.retrieve(clause_text)
 

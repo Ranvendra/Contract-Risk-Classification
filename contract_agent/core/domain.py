@@ -1,5 +1,5 @@
 """
-contract_agent/domain_detector.py — Contract Domain Detection
+contract_agent/core/domain.py — Component Logic
 =============================================================
 
 Identifies the contract domain (NDA, Employment, Lease, SaaS, Vendor, General)

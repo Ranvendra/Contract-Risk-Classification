@@ -1,6 +1,6 @@
 """
 Offline LLM backend via local Ollama.
-Same interface as openrouter_client — returns the 8-key analysis dict.
+Same interface as cloud_client — returns the 8-key analysis dict.
 Auto-starts the Ollama daemon if it is not already running.
 """
 from __future__ import annotations
@@ -12,7 +12,7 @@ from typing import Any
 
 import requests
 
-from contract_agent._shared_prompt import (
+from contract_agent.llm.prompting import (
     build_system_prompt,
     build_user_message,
     safe_parse_analysis,
