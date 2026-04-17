@@ -109,10 +109,13 @@ def analyze_clause_with_ollama(
     risk_label: str,
     confidence: float,
     best_practices: list[dict[str, Any]],
+    domain: str = "General",
 ) -> dict[str, str]:
     """
     Sends the clause to local Ollama for analysis.
-    Returns the 8-key analysis dict (same as OpenRouter client).
+    Args:
+        domain: Detected contract domain for domain-aware prompting.
+    Returns the 8-key analysis dict (same as cloud client).
     """
     base_url = _get_base_url()
     model = _get_model()
@@ -125,8 +128,8 @@ def analyze_clause_with_ollama(
                 "Start it with: ollama serve"
             )
 
-    system = build_system_prompt(risk_label, confidence)
-    user   = build_user_message(clause_text, best_practices)
+    system = build_system_prompt(risk_label, confidence, domain=domain)
+    user   = build_user_message(clause_text, best_practices, domain=domain)
 
     payload = {
         "model": model,
