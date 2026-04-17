@@ -201,7 +201,6 @@ details.custom-expander[open] summary .expand-icon {
 # ─────────────────────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_model():
-    # Cache busted!
     from contract_agent.utils.ml import load_sklearn_pipeline
     return load_sklearn_pipeline()
 
@@ -417,7 +416,7 @@ def _render_agentic_panel(
 
     # ── Step C: Trigger button ──────────────────────────────────────────────
     if cur_state == "initial":
-        from contract_agent.llm.cloud import check_cloud_health
+        from contract_agent.cloud_client import check_cloud_health
         health   = check_cloud_health()
         groq_tag = " + Groq fallback" if health.get("groq") else ""
 
@@ -617,76 +616,24 @@ def main():
 
     # ── Sidebar ───────────────────────────────────────────────────────────────
     with st.sidebar:
-        st.markdown("### Settings")
+        st.markdown("### ⚙️ Quick Settings")
 
         # AI mode toggle
-        st.markdown("#### AI Execution Mode")
+        st.markdown("#### Processing Mode ✨")
         mode_choice = st.radio(
-            "Select inference backend:",
-            ["Online Mode", "Offline Mode"],
+            "How should we analyze your document?",
+            ["🚀 Cloud AI (Fast & Powerful)", "🖥️ Local PC (Private & Slower)"],
             index=0, key="mode_radio",
-            help="Online connects to cloud models. Offline requires Local Ollama.",
+            help="Cloud AI uses our fast online servers. Local PC uses your own computer for complete privacy.",
         )
-        selected_mode = "online" if "Online" in mode_choice else "offline"
-
-        # Provider status (Pollinations is always available free)
-        if selected_mode == "online":
-            from contract_agent.llm.cloud import check_cloud_health
-            health = check_cloud_health()
-            if health.get("pollinations"):
-                st.success("Cloud Models (Free Tier) — Ready")
-                st.caption("Powered by Pollinations AI")
-            elif health["openrouter"]:
-                st.success("Cloud Models — Ready")
-            else:
-                st.warning("Cloud Credentials Missing")
-            if health["groq"]:
-                st.caption("Groq Fallback Active")
-        else:
-            with st.spinner("Connecting to Local Environment..."):
-                h = _ollama_health()
-            if h["reachable"]:
-                st.success("Local Environment — Ready")
-                avail = h.get("available_models", [])
-                if len(avail) > 1:
-                    chosen = st.selectbox("Local model:", avail,
-                        index=avail.index(h["model"]) if h["model"] in avail else 0,
-                        key="ollama_model_select")
-                    os.environ["OLLAMA_MODEL"] = chosen
-            else:
-                st.error("Local Environment Not Reachable")
-                st.caption("Verify that your Ollama engine is running.")
+        selected_mode = "online" if "Cloud" in mode_choice else "offline"
 
         st.markdown("---")
 
-        # RAG status
-        st.markdown("#### Knowledge Base Status")
-        from contract_agent.retrieval.chroma import _get_chroma_collection
-        col = _get_chroma_collection()
-        
-        if col is not None:
-            st.markdown(_rag_status_html(), unsafe_allow_html=True)
-            if st.button("Rebuild Database", use_container_width=True, help="Update the vector store with new guidelines."):
-                from rag_setup import build_vector_db
-                with st.spinner("Rebuilding Knowledge Base..."):
-                    build_vector_db(reset=True)
-                st.rerun()
-        else:
-            st.warning("Knowledge Base Missing")
-            st.info("ChromaDB is not initialized. Run the setup below to enable high-precision RAG analysis.")
-            if st.button("🚀 Build Knowledge Base", type="primary", use_container_width=True):
-                from rag_setup import build_vector_db
-                with st.spinner("Building Knowledge Base... (this may take 30-60s)"):
-                    build_vector_db()
-                st.rerun()
-
-        st.markdown("---")
-
-        # File update
+        # File update & Clear
         if st.session_state.file_data is not None:
-            st.markdown("#### Upload New Document")
-            nf = st.file_uploader("Upload New Contract", type=["txt", "pdf"],
-                key="sidebar_uploader")
+            st.markdown("#### 📄 Document Actions")
+            nf = st.file_uploader("Replace current document", type=["txt", "pdf"], key="sidebar_uploader")
             if nf:
                 st.session_state.file_data    = nf.getvalue()
                 st.session_state.file_name    = nf.name
@@ -696,24 +643,68 @@ def main():
                     if k.startswith("report_"):
                         del st.session_state[k]
                 st.rerun()
-            st.markdown("---")
 
-        st.markdown("#### Exclude Low Confidence")
-        confidence_threshold = st.slider(
-            "Min Confidence Score", 0.0, 1.0, 0.5, 0.05,
-            help="Clauses below this score are automatically considered low risk.",
-        )
-
-        st.markdown("---")
-        if st.session_state.file_data is not None:
-            _, del_col, _ = st.columns([1, 4, 1])
-            if del_col.button("Clear Document", use_container_width=True):
+            if st.button("🗑️ Clear Current File", use_container_width=True):
                 for k in ["file_data", "file_name", "file_type", "detected_domain"]:
                     st.session_state[k] = None
                 for k in list(st.session_state.keys()):
                     if k.startswith("report_"):
                         del st.session_state[k]
                 st.rerun()
+            st.markdown("---")
+
+        with st.expander("🛠️ Advanced Controls"):
+            st.caption("For power users and technical debugging.")
+            
+            st.markdown("**System Health Checks**")
+            if selected_mode == "online":
+                from contract_agent.llm.cloud import check_cloud_health
+                health = check_cloud_health()
+                if health.get("pollinations"):
+                    st.success("Cloud Server: Active")
+                elif health["openrouter"]:
+                    st.success("Cloud Server: Active")
+                else:
+                    st.warning("Cloud Server: Down / Missing Keys")
+            else:
+                h = _ollama_health()
+                if h["reachable"]:
+                    st.success("Local Engine: Linked")
+                    avail = h.get("available_models", [])
+                    if len(avail) > 1:
+                        chosen = st.selectbox("Local model:", avail,
+                            index=avail.index(h["model"]) if h["model"] in avail else 0,
+                            key="ollama_model_select")
+                        os.environ["OLLAMA_MODEL"] = chosen
+                else:
+                    st.error("Local Engine Not Found")
+
+            st.markdown("---")
+            st.markdown("**Legal Knowledge Base**")
+            from contract_agent.retrieval.chroma import _get_chroma_collection
+            col = _get_chroma_collection()
+            
+            if col is not None:
+                st.markdown(_rag_status_html(), unsafe_allow_html=True)
+                if st.button("Rebuild Database", use_container_width=True):
+                    from rag_setup import build_vector_db
+                    with st.spinner("Processing..."):
+                        build_vector_db(reset=True)
+                    st.rerun()
+            else:
+                st.warning("Not initialized")
+                if st.button("Build Knowledge Base", use_container_width=True):
+                    from rag_setup import build_vector_db
+                    with st.spinner("Processing..."):
+                        build_vector_db()
+                    st.rerun()
+
+            st.markdown("---")
+            st.markdown("**Risk Sensitivity**")
+            confidence_threshold = st.slider(
+                "Filter by confidence", 0.0, 1.0, 0.5, 0.05,
+                help="Only show results if AI is highly confident.",
+            )
 
         st.markdown("---")
         st.caption("Contract Risk Management System\nPrototype Build")
