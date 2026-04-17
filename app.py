@@ -416,7 +416,7 @@ def _render_agentic_panel(
 
     # ── Step C: Trigger button ──────────────────────────────────────────────
     if cur_state == "initial":
-        from contract_agent.cloud_client import check_cloud_health
+        from contract_agent.llm.cloud import check_cloud_health
         health   = check_cloud_health()
         groq_tag = " + Groq fallback" if health.get("groq") else ""
 
