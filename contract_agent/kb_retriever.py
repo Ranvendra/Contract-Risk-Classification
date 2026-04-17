@@ -1,77 +1,165 @@
-import json
+"""
+contract_agent/kb_retriever.py — Domain-Aware ChromaDB RAG Retriever
+=====================================================================
+
+Primary retriever queries the ChromaDB vector store built by rag_setup.py.
+Filters results by the detected contract domain for high-precision retrieval.
+
+Fallback chain:
+  1. ChromaDB domain-filtered search  (best quality)
+  2. ChromaDB full-collection search  (if domain has < top_k results)
+  3. TF-IDF over legal_best_practices.json  (if ChromaDB unavailable)
+
+Usage:
+    from contract_agent.kb_retriever import DomainAwareRetriever
+
+    retriever = DomainAwareRetriever(top_k=3)
+    results   = retriever.retrieve(clause_text="...", domain="Employment")
+"""
+from __future__ import annotations
+
 import os
-import re
 from functools import lru_cache
+from typing import Any
 
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+_BASE_DIR      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_CHROMA_DB_PATH = os.path.join(_BASE_DIR, "data", "chroma_db")
+_COLLECTION_NAME = "legal_guidelines"
 
 
-def _infer_topic_hint(text: str) -> str | None:
-    t = text.lower()
-    rules = [
-        ("termination", r"\bterminat(e|ion|able)\b|\bfor\s+cause\b|\bconvenience\b"),
-        ("indemnification", r"\bindemnif"),
-        ("limitation_of_liability", r"\bliabilit|\bconsequential\b|\bincidental\b"),
-        ("confidentiality", r"\bconfidential\b|\bnda\b|\bnon-?disclosure\b"),
-        ("intellectual_property", r"\bintellectual\s+property\b|\bwork\s+for\s+hire\b|\blicense\b"),
-        ("payment", r"\bpayment\b|\binvoice\b|\bfees?\b"),
-        ("representations_warranties", r"\brepresent(s|ation)|\bwarrant"),
-        ("force_majeure", r"\bforce\s+majeure\b"),
-        ("data_protection", r"\bdata\s+protection\b|\bgdpr\b|\bprocessor\b|\bcontroller\b"),
-    ]
-    for topic, pattern in rules:
-        if re.search(pattern, t):
-            return topic
-    return None
-
+# ─────────────────────────────────────────────────────────────────────────────
+# ChromaDB collection loader (cached once per process)
+# ─────────────────────────────────────────────────────────────────────────────
 
 @lru_cache(maxsize=1)
-def _load_kb_records():
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    path = os.path.join(base_dir, "data", "legal_best_practices.json")
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
+def _get_chroma_collection():
+    """
+    Returns the ChromaDB collection or None if unavailable.
+    Cached — only opens the DB once per process lifetime.
+    """
+    try:
+        import chromadb
+        from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+
+        client = chromadb.PersistentClient(path=_CHROMA_DB_PATH)
+        ef     = DefaultEmbeddingFunction()
+        existing = [c.name for c in client.list_collections()]
+        if _COLLECTION_NAME not in existing:
+            return None
+        return client.get_collection(_COLLECTION_NAME, embedding_function=ef)
+    except Exception:
+        return None
 
 
-class LegalPracticeRetriever:
+# ─────────────────────────────────────────────────────────────────────────────
+# Main retriever class
+# ─────────────────────────────────────────────────────────────────────────────
+
+class DomainAwareRetriever:
+    """
+    Domain-filtered ChromaDB RAG retriever with automatic TF-IDF fallback.
+
+    Results are formatted as dicts with keys:
+      id, domain, topic, title, text, score
+    """
+
     def __init__(self, top_k: int = 3):
-        self.top_k = top_k
-        records = _load_kb_records()
-        self._records = records
-        corpus = [f"{r['title']} {r['topic']} {r['text']}" for r in records]
-        self._vectorizer = TfidfVectorizer(
-            ngram_range=(1, 2),
-            max_features=2000,
-            stop_words="english",
+        self.top_k       = top_k
+        self._collection = _get_chroma_collection()
+        self._tfidf      = None   # lazy-loaded fallback
+
+    # ── Public API ────────────────────────────────────────────────────────────
+
+    def retrieve(self, clause_text: str, domain: str = "General") -> list[dict[str, Any]]:
+        """
+        Retrieve the top_k most relevant legal guidelines for a clause.
+
+        Args:
+            clause_text: The raw clause text to find guidelines for.
+            domain:      Detected contract domain for metadata filtering.
+
+        Returns:
+            List of up to top_k result dicts.
+        """
+        if self._collection is not None:
+            try:
+                return self._chroma_retrieve(clause_text, domain)
+            except Exception:
+                pass
+        # ChromaDB unavailable or query failed → TF-IDF fallback
+        return self._tfidf_retrieve(clause_text)
+
+    def is_using_chroma(self) -> bool:
+        """True if ChromaDB is available and loaded."""
+        return self._collection is not None
+
+    # ── Private: ChromaDB retrieval ───────────────────────────────────────────
+
+    def _chroma_retrieve(self, clause_text: str, domain: str) -> list[dict[str, Any]]:
+        collection = self._collection
+
+        # Try domain-specific filtered retrieval first
+        if domain and domain != "General":
+            try:
+                results = collection.query(
+                    query_texts=[clause_text],
+                    n_results=self.top_k,
+                    where={"domain": domain},
+                    include=["documents", "metadatas", "distances"],
+                )
+                if results["ids"][0]:  # got results within the domain
+                    return self._format(results)
+            except Exception:
+                pass  # fall through to unfiltered search
+
+        # Fallback: search across entire collection
+        results = collection.query(
+            query_texts=[clause_text],
+            n_results=self.top_k,
+            include=["documents", "metadatas", "distances"],
         )
-        self._matrix = self._vectorizer.fit_transform(corpus)
+        return self._format(results)
 
-    def retrieve(self, clause_text: str) -> list[dict]:
-        hint = _infer_topic_hint(clause_text)
-        q = self._vectorizer.transform([clause_text])
-        sims = cosine_similarity(q, self._matrix).flatten()
-        ranked = np.argsort(-sims)
+    @staticmethod
+    def _format(results: dict) -> list[dict[str, Any]]:
+        """Convert raw ChromaDB results to standard list-of-dicts."""
+        out   = []
+        ids   = results["ids"][0]
+        docs  = results["documents"][0]
+        metas = results["metadatas"][0]
+        dists = results["distances"][0]
 
-        picked: list[dict] = []
-        seen: set[int] = set()
-        if hint:
-            topic_indices = [
-                i for i, rec in enumerate(self._records) if rec.get("topic") == hint
-            ]
-            topic_indices.sort(key=lambda i: float(sims[i]), reverse=True)
-            for i in topic_indices:
-                if len(picked) >= self.top_k:
-                    break
-                picked.append({"score": float(sims[i]), **self._records[i]})
-                seen.add(i)
-        for idx in ranked:
-            idx = int(idx)
-            if idx in seen:
-                continue
-            picked.append({"score": float(sims[idx]), **self._records[idx]})
-            seen.add(idx)
-            if len(picked) >= self.top_k:
-                break
-        return picked[: self.top_k]
+        for i, doc_id in enumerate(ids):
+            meta = metas[i] or {}
+            out.append({
+                "id":     doc_id,
+                "domain": meta.get("domain", "General"),
+                "topic":  meta.get("topic",  ""),
+                "title":  meta.get("title",  ""),
+                "text":   docs[i],
+                "score":  round(1.0 - float(dists[i]), 4),  # cosine similarity
+            })
+        return out
+
+    # ── Private: TF-IDF fallback ──────────────────────────────────────────────
+
+    def _tfidf_retrieve(self, clause_text: str) -> list[dict[str, Any]]:
+        if self._tfidf is None:
+            from contract_agent._tfidf_retriever import TFIDFRetriever
+            self._tfidf = TFIDFRetriever(top_k=self.top_k)
+        return self._tfidf.retrieve(clause_text)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Backward-compatible alias (existing code uses LegalPracticeRetriever)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class LegalPracticeRetriever(DomainAwareRetriever):
+    """
+    Drop-in replacement for the old TF-IDF-only LegalPracticeRetriever.
+    Internally uses DomainAwareRetriever — ChromaDB when available,
+    TF-IDF fallback otherwise.
+    """
+
+    def retrieve(self, clause_text: str, domain: str = "General") -> list[dict[str, Any]]:
+        return super().retrieve(clause_text, domain=domain)

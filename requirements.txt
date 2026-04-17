@@ -1,18 +1,31 @@
+# ── Core data & ML ────────────────────────────────────────────────────────────
 pandas
 numpy
 scikit-learn
 matplotlib
 seaborn
 jupyter
-streamlit>=1.32.0
+tqdm
+
+# ── NLP ───────────────────────────────────────────────────────────────────────
 nltk
 spacy
-tqdm
+
+# ── UI ────────────────────────────────────────────────────────────────────────
+streamlit>=1.32.0
 plotly
-PyPDF2
 altair>=5.0.0,<7.0.0
+PyPDF2
+
+# ── LangGraph + LLM ───────────────────────────────────────────────────────────
 langgraph>=0.2.0
 langchain-core>=0.3.0
 openai>=1.40.0
+
+# ── RAG — Domain-Aware Vector DB ──────────────────────────────────────────────
+chromadb>=0.5.0
+sentence-transformers>=3.0.0
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
 python-dotenv>=1.0.0
 requests>=2.31.0

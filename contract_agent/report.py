@@ -1,6 +1,12 @@
 """
-Report builder — converts clause assessments into a structured JSON report
-and a professional, user-friendly Markdown report.
+contract_agent/report.py — Report Builder
+=========================================
+
+Converts clause assessments into two output formats:
+
+  1. `structured_report` — a JSON dict for interactive Streamlit rendering
+  2. `render_markdown_report` — a clean, simplified 4-section markdown report
+       containing exactly: Summary | Deep Dive | Mitigation | Disclaimer
 """
 from __future__ import annotations
 
@@ -17,16 +23,16 @@ DISCLAIMER = (
 )
 
 _ACTION_ICONS = {
-    "Remove Clause":       "🚫",
-    "Negotiate Terms":     "🤝",
-    "Seek Legal Review":   "⚖️",
-    "Accept with Caution": "⚠️",
+    "Remove Clause":       "",
+    "Negotiate Terms":     "",
+    "Seek Legal Review":   "",
+    "Accept with Caution": "",
 }
 
 _RISK_ICONS = {
-    "High":   "🔴",
-    "Medium": "🟠",
-    "Low":    "🟢",
+    "High":   "",
+    "Medium": "",
+    "Low":    "",
 }
 
 _RISK_LABELS = {
@@ -36,13 +42,14 @@ _RISK_LABELS = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Structured JSON report
-# ---------------------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────────────────────
+# Structured JSON report (for Streamlit interactive UI)
+# ─────────────────────────────────────────────────────────────────────────────
 
 def build_structured_report(
-    contract_overview: str,
+    contract_overview:  str,
     clause_assessments: list[dict[str, Any]],
+    domain:             str = "General",
 ) -> dict[str, Any]:
     risks  = [c.get("risk_level", "") for c in clause_assessments]
     counts = Counter(risks)
@@ -52,24 +59,26 @@ def build_structured_report(
         a = c.get("analysis") or {}
         flagged.append({
             # ML layer
-            "clause_text":       c.get("clause_text", ""),
-            "model_risk_level":  c.get("risk_level"),
-            "model_confidence":  c.get("confidence"),
-            "retrieved_practice_ids": [p.get("id") for p in c.get("best_practices", [])],
+            "clause_text":             c.get("clause_text", ""),
+            "model_risk_level":        c.get("risk_level"),
+            "model_confidence":        c.get("confidence"),
+            "retrieved_practice_ids":  [p.get("id") for p in c.get("best_practices", [])],
+            "retrieved_domain":        domain,
             # LLM layer (8 fields)
-            "plain_english_summary":      a.get("plain_english_summary", ""),
-            "what_makes_it_risky":        a.get("what_makes_it_risky", ""),
-            "who_bears_the_risk":         a.get("who_bears_the_risk", ""),
-            "severity_rationale":         a.get("severity_rationale", ""),
+            "plain_english_summary":      a.get("plain_english_summary",      ""),
+            "what_makes_it_risky":        a.get("what_makes_it_risky",        ""),
+            "who_bears_the_risk":         a.get("who_bears_the_risk",         ""),
+            "severity_rationale":         a.get("severity_rationale",         ""),
             "industry_standard_practice": a.get("industry_standard_practice", ""),
-            "negotiation_tips":           a.get("negotiation_tips", ""),
-            "safer_rewrite":              a.get("safer_rewrite", ""),
+            "negotiation_tips":           a.get("negotiation_tips",           ""),
+            "safer_rewrite":              a.get("safer_rewrite",              ""),
             "action_required":            a.get("action_required", "Seek Legal Review"),
         })
 
     return {
-        "contract_overview":     contract_overview,
-        "risk_severity_breakdown": {
+        "contract_overview":          contract_overview,
+        "domain":                     domain,
+        "risk_severity_breakdown":    {
             "High":   int(counts.get("High",   0)),
             "Medium": int(counts.get("Medium", 0)),
             "Low":    int(counts.get("Low",    0)),
@@ -79,9 +88,9 @@ def build_structured_report(
     }
 
 
-# ---------------------------------------------------------------------------
-# Markdown report renderer
-# ---------------------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────────────────────
+# Simplified markdown report — 4 sections: Summary | Deep Dive | Mitigation | Disclaimer
+# ─────────────────────────────────────────────────────────────────────────────
 
 def render_markdown_report(report: dict[str, Any]) -> str:
     b      = report["risk_severity_breakdown"]
@@ -89,127 +98,131 @@ def render_markdown_report(report: dict[str, Any]) -> str:
     medium = int(b.get("Medium", 0))
     low    = int(b.get("Low",    0))
     total  = high + medium + low
+    domain = report.get("domain", "General")
 
-    # ── Overall risk signal ───────────────────────────────────────────────────
+    # Overall risk signal
     if high >= 2:
-        overall_signal = "🔴 **HIGH RISK DOCUMENT** — Multiple critical issues detected."
+        overall = f"🔴 **HIGH RISK** — {high} critical clause(s) require immediate attention or rejection."
     elif high == 1:
-        overall_signal = "🟠 **ELEVATED RISK** — At least one critical clause requires attention."
+        overall = "🟠 **ELEVATED RISK** — 1 critical clause must be renegotiated before signing."
     elif medium >= 2:
-        overall_signal = "🟡 **MODERATE RISK** — Several clauses need review."
+        overall = f"🟡 **MODERATE RISK** — {medium} clauses need review and possible amendment."
     else:
-        overall_signal = "🟢 **LOWER RISK** — Minor concerns only. Standard review recommended."
+        overall = "🟢 **LOWER RISK** — Minor concerns only. Standard legal review recommended."
+
+    clauses = report.get("flagged_clauses_and_mitigation", [])
+    ordered = (
+        [c for c in clauses if c.get("model_risk_level") == "High"] +
+        [c for c in clauses if c.get("model_risk_level") == "Medium"]
+    )
 
     lines: list[str] = [
-        "---",
-        "# 📋 Contract Risk Assessment Report",
+        "# 📋 Contract Risk Report",
+        "",
+        f"**Contract Type:** {domain}  |  "
+        f"**Clauses Reviewed:** {total}  |  "
+        f"🔴 {high} High · 🟠 {medium} Medium",
+        "",
         "---",
         "",
-        "## 📌 Executive Summary",
+        "## 1. Summary",
         "",
         f"> {report.get('contract_overview', '(No overview available.)')}",
         "",
-        f"**Overall Signal:** {overall_signal}",
+        f"**Overall Risk:** {overall}",
         "",
-        "### Risk Breakdown",
-        "",
-        f"| Severity | Count | Meaning |",
-        f"|----------|-------|---------|",
-        f"| 🔴 High   | **{high}** | Requires immediate attention or renegotiation |",
-        f"| 🟠 Medium | **{medium}** | Should be reviewed and potentially amended |",
-        f"| 🟢 Low    | **{low}** | Minor concern; acceptable with awareness |",
-        f"| **Total** | **{total}** | Clauses assessed by the AI agent |",
+        "| Risk Level | Count |",
+        "|------------|-------|",
+        f"| High    | **{high}** |",
+        f"| Medium  | **{medium}** |",
+        f"| Low     | {low} (filtered — not sent to AI) |",
         "",
         "---",
-        "## 🔍 Clause-by-Clause Analysis",
+        "",
+        "## 2. Deep Dive — Why Each Clause Is Risky",
         "",
     ]
 
-    clauses = report.get("flagged_clauses_and_mitigation", [])
-    high_clauses   = [c for c in clauses if c.get("model_risk_level") == "High"]
-    medium_clauses = [c for c in clauses if c.get("model_risk_level") == "Medium"]
-    low_clauses    = [c for c in clauses if c.get("model_risk_level") == "Low"]
-
-    ordered = high_clauses + medium_clauses + low_clauses
-
     for i, row in enumerate(ordered, 1):
-        risk        = row.get("model_risk_level", "Unknown")
-        conf        = float(row.get("model_confidence") or 0)
-        action      = row.get("action_required", "Seek Legal Review")
-        action_icon = _ACTION_ICONS.get(action, "⚖️")
-        risk_icon   = _RISK_ICONS.get(risk, "⚪")
-        risk_label  = _RISK_LABELS.get(risk, risk.upper())
-        who         = row.get("who_bears_the_risk", "Unknown")
+        risk   = row.get("model_risk_level", "Unknown")
+        conf   = float(row.get("model_confidence") or 0)
+        action = row.get("action_required", "Seek Legal Review")
+        who    = row.get("who_bears_the_risk", "Unknown")
 
-        lines.extend([
-            f"### {risk_icon} Clause {i} — {risk_label}",
+        preview = row.get("clause_text", "")[:100].replace("\n", " ").strip()
+
+        lines += [
+            f"### Clause {i} — {_RISK_LABELS.get(risk, risk)}",
             "",
-            f"| | |",
-            f"|---|---|",
-            f"| **ML Confidence** | {conf:.0%} |",
-            f"| **Risk Bearer**   | {who} |",
-            f"| **Action**        | {action_icon} {action} |",
+            f"**Risk Bearer:** {who}  |  **ML Confidence:** {conf:.0%}  |  **Action:** {action}",
             "",
-            "#### 📄 Original Clause Text",
+            f"> *\"{preview}…\"*",
             "",
-            f"> {row.get('clause_text', '').strip()}",
-            "",
-            "#### 💬 What This Clause Says (Plain English)",
-            "",
+            "**What it actually says:**",
             row.get("plain_english_summary", "—"),
             "",
-            "#### ⚠️ Why This Is Risky",
-            "",
-            row.get("what_makes_it_risky", "—"),
-            "",
-            "#### 📊 Why It Was Rated " + risk,
-            "",
-            row.get("severity_rationale", "—"),
-            "",
-            "#### 📚 Industry Standard Practice",
-            "",
+            "**Why it is risky:**",
+        ]
+
+        # Render bullet points if the text looks like a list already
+        risky_text = row.get("what_makes_it_risky", "—")
+        lines.append(risky_text)
+        lines.append("")
+
+        lines += [
+            f"**Industry standard ({domain}):**",
             row.get("industry_standard_practice", "—"),
             "",
-            "#### 🤝 Negotiation Tips",
-            "",
-            row.get("negotiation_tips", "—"),
-            "",
-            "#### ✅ Suggested Safer Wording",
-            "",
-            "```",
-            row.get("safer_rewrite", "—"),
-            "```",
-            "",
-            "---",
-            "",
-        ])
+        ]
 
-    # ── Action summary table ──────────────────────────────────────────────────
-    lines.extend([
-        "## 📋 Action Summary",
+    lines += [
+        "---",
         "",
-        "| # | Risk | Action Required | Clause Preview |",
-        "|---|------|-----------------|----------------|",
-    ])
-    for i, row in enumerate(ordered, 1):
-        risk       = row.get("model_risk_level", "?")
-        risk_icon  = _RISK_ICONS.get(risk, "⚪")
-        action     = row.get("action_required", "Seek Legal Review")
-        action_icon= _ACTION_ICONS.get(action, "⚖️")
-        preview    = row.get("clause_text", "")[:60].replace("\n", " ").strip()
-        lines.append(
-            f"| {i} | {risk_icon} {risk} | {action_icon} {action} | {preview}… |"
-        )
+        "## 3. Mitigation — How to Fix Each Clause",
+        "",
+    ]
 
-    lines.extend([
+    for i, row in enumerate(ordered, 1):
+        risk = row.get("model_risk_level", "Unknown")
+
+        lines += [
+            f"### Clause {i}",
+            "",
+            "**Negotiation steps:**",
+            row.get("negotiation_tips", "1. Seek legal review before signing."),
+            "",
+            "**Suggested safer wording:**",
+            "```",
+            row.get("safer_rewrite", "(Manual review required)"),
+            "```",
+            "",
+        ]
+
+    # Action summary table
+    lines += [
+        "---",
+        "",
+        "### Action Summary",
+        "",
+        "| # | Risk | Action | Clause |",
+        "|---|------|--------|--------|",
+    ]
+    for i, row in enumerate(ordered, 1):
+        risk   = row.get("model_risk_level", "?")
+        action = row.get("action_required", "Seek Legal Review")
+        prev   = row.get("clause_text", "")[:60].replace("\n", " ").strip()
+        lines.append(f"| {i} | {risk} | {action} | {prev}… |")
+
+    lines += [
         "",
         "---",
-        "## ⚠️ Disclaimer",
+        "",
+        "## 4. Disclaimer",
         "",
         DISCLAIMER,
         "",
         "---",
-        "*Generated by the Intelligent Contract Risk Analysis System · Phase 2 (Agentic AI)*",
-    ])
+        "*Generated by the Intelligent Contract Risk Analysis System — Milestone 2 (Agentic AI + Domain-Aware RAG)*",
+    ]
 
     return "\n".join(lines)
