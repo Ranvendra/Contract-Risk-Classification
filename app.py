@@ -695,18 +695,17 @@ def main():
                         except Exception as _e:
                             st.error(f"❌ Rebuild failed: {_e}")
             else:
-                st.warning("Not initialized")
-                if st.button("Build Knowledge Base", use_container_width=True):
-                    from rag_setup import build_vector_db
-                    with st.spinner("Processing..."):
-                        try:
-                            build_vector_db()
-                            st.rerun()
-                        except Exception as _e:
-                            st.error(
-                                f"❌ ChromaDB setup failed: {_e}\n\n"
-                                "The app will use TF-IDF retrieval as a fallback."
-                            )
+                st.info("Initializing Knowledge Base for the first time...")
+                from rag_setup import build_vector_db
+                with st.spinner("Downloading embedding models & building database... (this may take 60s)"):
+                    try:
+                        build_vector_db()
+                        st.rerun()
+                    except Exception as _e:
+                        st.error(
+                            f"❌ ChromaDB setup failed: {_e}\n\n"
+                            "The app will use TF-IDF retrieval as a fallback."
+                        )
 
             st.markdown("---")
             st.markdown("**Risk Sensitivity**")
