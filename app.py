@@ -537,37 +537,76 @@ def _render_agentic_panel(
                 risk = cur["risk_level"]
                 conf = cur["confidence"]
                 
-                st.markdown(f"### Clause {r_num} Breakdown")
+                # ── Custom AI Report Styling ──
+                risk_color = "#ef4444" if risk == "High" else "#f97316" if risk == "Medium" else "#22c55e"
+                risk_bg    = "#fef2f2" if risk == "High" else "#fff7ed" if risk == "Medium" else "#f0fdf4"
                 
-                st.markdown(f"**Risk Bearer:** {an.get('who_bears_the_risk', 'Unknown')} &nbsp;|&nbsp; **ML Risk:** {risk} &nbsp;|&nbsp; **Action:** {an.get('action_required', 'Review')}")
-                st.markdown("---")
+                st.markdown(f"""
+                <div style="border-left: 5px solid {risk_color}; padding: 15px 20px; background: {risk_bg}; border-radius: 6px; border-right: 1px solid rgba(0,0,0,0.05); border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 24px;">
+                    <h3 style="margin-top: 0; margin-bottom: 15px; color: #0f172a; font-weight: 700; letter-spacing: -0.01em;">Clause {r_num} Breakdown</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.9rem;">
+                        <span style="background: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>Risk Bearer:</strong> <span style="color:#334155;">{an.get('who_bears_the_risk', 'Unknown')}</span></span>
+                        <span style="background: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>ML Risk:</strong> <span style="color: {risk_color}; font-weight: 700;">{risk}</span></span>
+                        <span style="background: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>Action:</strong> <span style="color:#334155;">{an.get('action_required', 'Review')}</span></span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                from contract_agent.utils.text import get_summary
-                summary_text = get_summary(cur["clause_text"], 150)
-                
-                st.markdown("##### What It Says")
-                st.info(an.get('plain_english_summary', '—'))
+                st.markdown(f"""
+                <div style="margin-bottom:24px;">
+                    <h5 style="color: #3b82f6; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #eff6ff; padding-bottom: 6px;">What It Says</h5>
+                    <div style="background: #f8fafc; padding: 16px 20px; border-radius: 8px; color: #334155; font-size: 0.95rem; border: 1px solid #e2e8f0; line-height: 1.6;">
+                        {an.get('plain_english_summary', '—')}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 if risk in ("High", "Medium"):
                     cl1, cl2 = st.columns(2)
                     with cl1:
-                        st.markdown("##### Why It's Risky")
-                        st.warning(an.get('what_makes_it_risky', '—'))
+                        st.markdown(f"""
+                        <div style="margin-bottom:20px;">
+                            <h5 style="color: #ef4444; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px;">Why It's Risky</h5>
+                            <div style="background: #fef2f2; padding: 16px; border-radius: 8px; color: #991b1b; font-size: 0.9rem; border: 1px solid #fecaca; min-height: 120px; line-height: 1.6;">
+                                {an.get('what_makes_it_risky', '—')}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
                     with cl2:
-                        st.markdown(f"##### {domain} Practice")
-                        st.success(an.get('industry_standard_practice', '—'))
+                        st.markdown(f"""
+                        <div style="margin-bottom:20px;">
+                            <h5 style="color: #10b981; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px;">{domain} Practice</h5>
+                            <div style="background: #ecfdf5; padding: 16px; border-radius: 8px; color: #065f46; font-size: 0.9rem; border: 1px solid #a7f3d0; min-height: 120px; line-height: 1.6;">
+                                {an.get('industry_standard_practice', '—')}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
                         
-                    st.markdown("##### Negotiation & Mitigation")
-                    st.write(an.get('negotiation_tips', '—'))
+                    st.markdown(f"""
+                    <div style="margin-bottom:24px;">
+                        <h5 style="color: #8b5cf6; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #f5f3ff; padding-bottom: 6px;">Negotiation & Mitigation</h5>
+                        <div style="background: #f5f3ff; padding: 16px 20px; border-radius: 8px; color: #4c1d95; font-size: 0.95rem; border: 1px solid #ddd6fe; line-height: 1.6;">
+                            {an.get('negotiation_tips', '—')}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
                     
-                    st.markdown("##### Safer Rewrite")
+                    st.markdown(f"""
+                    <div style="margin-bottom:10px;">
+                        <h5 style="color: #64748b; font-size: 1.05rem; font-weight: 600; margin-bottom: 8px;">Safer Rewrite</h5>
+                    </div>
+                    """, unsafe_allow_html=True)
                     st.code(an.get('safer_rewrite', '—'), language=None)
                 else:
-                    st.markdown("##### Assessment")
-                    st.success("This clause is standard and lower risk. No immediate modifications required.")
+                    st.markdown(f"""
+                    <div style="margin-bottom:24px; background: #f0fdf4; padding: 16px 20px; border-radius: 8px; border: 1px solid #bbf7d0; border-left: 4px solid #22c55e;">
+                        <h5 style="color: #166534; font-size: 1.05rem; font-weight: 600; margin-bottom: 6px;">Assessment</h5>
+                        <span style="color: #15803d; font-size: 0.95rem;">This clause is standard and lower risk. No immediate modifications required.</span>
+                    </div>
+                    """, unsafe_allow_html=True)
 
                 with st.expander("Show Original Clause Text"):
-                    st.write(cur["clause_text"])
+                    st.markdown(f"""<div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; padding: 15px; background: #f8fafc; border-radius: 6px; color: #475569; border: 1px solid #e2e8f0; max-height: 250px; overflow-y: auto;">{cur["clause_text"]}</div>""", unsafe_allow_html=True)
             else:
                 st.info("The first clause is currently being analyzed by the AI...")
 
