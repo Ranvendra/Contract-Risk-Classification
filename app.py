@@ -371,7 +371,7 @@ def _render_ml_dashboard(df: pd.DataFrame, domain: str):
 
     st.markdown("---")
     st.download_button(
-        "📥 Download CSV",
+        "Download CSV",
         df.drop(columns=["Risk_Score"], errors="ignore").to_csv(index=False).encode(),
         "contract_risk.csv", "text/csv", key="dl_m1_csv",
     )
@@ -398,13 +398,13 @@ def _render_agentic_panel(
 
     is_online = mode == "online"
     badge_cls = "badge-online" if is_online else "badge-offline"
-    badge_lbl = "🌐 Online"   if is_online else "🖥 Offline"
+    badge_lbl = "Online"   if is_online else "Offline"
 
     # ── Guard checks (Online always passes via Free API fallback) ────────────
     if not is_online:
         h = _ollama_health()
         if not h["reachable"]:
-            st.error("❌ **Ollama is not reachable.** Run `ollama serve` in a terminal, then refresh.")
+            st.error("**Ollama is not reachable.** Run `ollama serve` in a terminal, then refresh.")
             return
 
     state_key = f"state_{mode}"
@@ -418,13 +418,12 @@ def _render_agentic_panel(
     if cur_state == "initial":
         from contract_agent.llm.cloud import check_cloud_health
         health   = check_cloud_health()
-        groq_tag = " + Groq fallback" if health.get("groq") else ""
 
         st.markdown(f"""
-        <div style="text-align: center; padding: 40px 20px;">
-            <h2 style="font-size: 2.2rem; margin-bottom: 15px;">Deep AI Legal Review</h2>
-            <span class="{badge_cls}" style="margin-bottom: 20px;">{badge_lbl}{groq_tag}</span>
-            <p style="font-size: 1.1rem; opacity: 0.8; max-width: 600px; margin: 20px auto 30px auto; line-height: 1.6;">
+        <div style="text-align: center; padding: 40px 20px; background: linear-gradient(145deg, rgba(59,130,246,0.03) 0%, rgba(99,102,241,0.03) 100%); border-radius: 16px; border: 1px solid rgba(59,130,246,0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+            <h2 style="font-size: 2.4rem; margin-bottom: 12px; color: #0f172a; font-weight: 800; letter-spacing: -0.02em;">Deep AI Legal Review</h2>
+            <span class="{badge_cls}" style="margin-bottom: 24px; padding: 6px 18px; font-size: 0.9rem; letter-spacing: 0.5px; text-transform: uppercase;">{badge_lbl}</span>
+            <p style="font-size: 1.15rem; color: #475569; max-width: 650px; margin: 15px auto 30px auto; line-height: 1.7;">
                 Unleash the full power of our Legal LangGraph AI. We will interactively analyze <strong>every single clause</strong> against established legal precedence for your contract's domain (<strong>{domain}</strong>), providing negotiation tips and safer rewrites.
             </p>
         </div>
@@ -436,7 +435,7 @@ def _render_agentic_panel(
         if btn_col.button(f"Start Deep Analysis ({domain} Domain)", type="primary", use_container_width=True, key=f"run_{mode}"):
             ml_model = load_model()
             if ml_model is None:
-                st.error("⚠️ ML model not found. Run training first.")
+                st.error("ML model not found. Run training first.")
                 return
 
             with st.spinner("Preparing Document Clauses..."):
@@ -506,7 +505,7 @@ def _render_agentic_panel(
         left_col, right_col = st.columns([1.3, 2.7], gap="medium")
         
         with left_col:
-            st.markdown("##### 📄 Clauses List")
+            st.markdown("##### Clauses List")
             if not results:
                 st.caption("Waiting for first clause...")
             
@@ -514,8 +513,8 @@ def _render_agentic_panel(
             st.markdown("<div style='max-height: 65vh; overflow-y: auto; padding-right: 15px;'>", unsafe_allow_html=True)
             for i, res in enumerate(results):
                 risk = res["risk_level"]
-                icon = "🔴" if risk=="High" else "🟠" if risk=="Medium" else "🟢"
-                label = f"{icon} Clause {i+1} — {risk} Risk"
+                icon = "" if risk=="High" else "" if risk=="Medium" else ""
+                label = f"Clause {i+1} — {risk} Risk"
                 
                 is_selected = (st.session_state.get(idx_key, 0) == i)
                 btn_type = "primary" if is_selected else "secondary"
@@ -546,25 +545,25 @@ def _render_agentic_panel(
                 from contract_agent.utils.text import get_summary
                 summary_text = get_summary(cur["clause_text"], 150)
                 
-                st.markdown("##### 📝 What It Says")
+                st.markdown("##### What It Says")
                 st.info(an.get('plain_english_summary', '—'))
                 
                 if risk in ("High", "Medium"):
                     cl1, cl2 = st.columns(2)
                     with cl1:
-                        st.markdown("##### ⚠️ Why It's Risky")
+                        st.markdown("##### Why It's Risky")
                         st.warning(an.get('what_makes_it_risky', '—'))
                     with cl2:
-                        st.markdown(f"##### 🎯 {domain} Practice")
+                        st.markdown(f"##### {domain} Practice")
                         st.success(an.get('industry_standard_practice', '—'))
                         
-                    st.markdown("##### 🤝 Negotiation & Mitigation")
+                    st.markdown("##### Negotiation & Mitigation")
                     st.write(an.get('negotiation_tips', '—'))
                     
-                    st.markdown("##### ✨ Safer Rewrite")
+                    st.markdown("##### Safer Rewrite")
                     st.code(an.get('safer_rewrite', '—'), language=None)
                 else:
-                    st.markdown("##### ✅ Assessment")
+                    st.markdown("##### Assessment")
                     st.success("This clause is standard and lower risk. No immediate modifications required.")
 
                 with st.expander("Show Original Clause Text"):
@@ -616,23 +615,23 @@ def main():
 
     # ── Sidebar ───────────────────────────────────────────────────────────────
     with st.sidebar:
-        st.markdown("### ⚙️ Quick Settings")
+        st.markdown("### Quick Settings")
 
         # AI mode toggle
-        st.markdown("#### Processing Mode ✨")
+        st.markdown("#### Processing Mode")
         mode_choice = st.radio(
             "How should we analyze your document?",
-            ["🚀 Cloud AI (Fast & Powerful)", "🖥️ Local PC (Private & Slower)"],
+            ["Online", "Local"],
             index=0, key="mode_radio",
             help="Cloud AI uses our fast online servers. Local PC uses your own computer for complete privacy.",
         )
-        selected_mode = "online" if "Cloud" in mode_choice else "offline"
+        selected_mode = "online" if mode_choice == "Online" else "offline"
 
         st.markdown("---")
 
         # File update & Clear
         if st.session_state.file_data is not None:
-            st.markdown("#### 📄 Document Actions")
+            st.markdown("#### Document Actions")
             nf = st.file_uploader("Replace current document", type=["txt", "pdf"], key="sidebar_uploader")
             if nf:
                 st.session_state.file_data    = nf.getvalue()
@@ -644,7 +643,7 @@ def main():
                         del st.session_state[k]
                 st.rerun()
 
-            if st.button("🗑️ Clear Current File", use_container_width=True):
+            if st.button("Clear Current File", use_container_width=True):
                 for k in ["file_data", "file_name", "file_type", "detected_domain"]:
                     st.session_state[k] = None
                 for k in list(st.session_state.keys()):
@@ -653,7 +652,7 @@ def main():
                 st.rerun()
             st.markdown("---")
 
-        with st.expander("🛠️ Advanced Controls"):
+        with st.expander("Advanced Controls"):
             st.caption("For power users and technical debugging.")
             
             st.markdown("**System Health Checks**")
@@ -693,7 +692,7 @@ def main():
                             build_vector_db(reset=True)
                             st.rerun()
                         except Exception as _e:
-                            st.error(f"❌ Rebuild failed: {_e}")
+                            st.error(f"Rebuild failed: {_e}")
             else:
                 st.info("Initializing Knowledge Base for the first time...")
                 from rag_setup import build_vector_db
@@ -703,7 +702,7 @@ def main():
                         st.rerun()
                     except Exception as _e:
                         st.error(
-                            f"❌ ChromaDB setup failed: {_e}\n\n"
+                            f"ChromaDB setup failed: {_e}\n\n"
                             "The app will use TF-IDF retrieval as a fallback."
                         )
 
