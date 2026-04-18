@@ -488,7 +488,7 @@ def _render_agentic_panel(
             st.progress(pct, text=f"Analyzing clause {len(results)+1} of {total} in background... You can begin reading now.")
         else:
             st.success(f"Analysis Complete — Reviewed all {total} clauses.")
-            col1, col2, _ = st.columns([1, 1, 3])
+            col1, col2, col3, _ = st.columns([1, 1, 1, 2])
             
             if col1.button("Restart Analysis", use_container_width=True):
                 st.session_state[state_key] = "initial"
@@ -498,6 +498,14 @@ def _render_agentic_panel(
             json_blob = json.dumps(results, indent=2).encode('utf-8')
             with col2:
                 st.download_button("Download JSON", json_blob, "report.json", "application/json", use_container_width=True)
+
+            with col3:
+                from contract_agent.core.pdf_report import generate_pdf_report
+                try:
+                    pdf_bytes = generate_pdf_report(results, domain)
+                    st.download_button("Download PDF", pdf_bytes, "legal_report.pdf", "application/pdf", use_container_width=True)
+                except Exception as e:
+                    st.error(f"PDF error: {e}")
         
         st.markdown("---")
         
