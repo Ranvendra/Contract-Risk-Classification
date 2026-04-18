@@ -30,7 +30,7 @@ def _safe_str(t) -> str:
     # latin-1 replace
     return t.encode('latin-1', 'replace').decode('latin-1')
 
-def generate_pdf_report(results, domain: str) -> bytes:
+def generate_pdf_report(results, domain: str, file_name: str = "Unknown Document") -> bytes:
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -38,7 +38,10 @@ def generate_pdf_report(results, domain: str) -> bytes:
     # Overview
     pdf.set_font("helvetica", "B", 14)
     pdf.set_text_color(15, 23, 42)
-    pdf.cell(0, 10, f"Domain Context: {_safe_str(domain)}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, f"Document: {_safe_str(file_name)}", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "B", 12)
+    pdf.set_text_color(51, 65, 85)
+    pdf.cell(0, 8, f"Domain Context: {_safe_str(domain)}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("helvetica", "", 10)
     pdf.set_text_color(71, 85, 105)
     pdf.multi_cell(0, 6, f"This document has been evaluated against standard practices for {_safe_str(domain)} agreements. {len(results)} clauses were flagged for review.", new_x="LMARGIN", new_y="NEXT")

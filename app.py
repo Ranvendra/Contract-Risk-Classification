@@ -502,7 +502,8 @@ def _render_agentic_panel(
             with col3:
                 from contract_agent.core.pdf_report import generate_pdf_report
                 try:
-                    pdf_bytes = generate_pdf_report(results, domain)
+                    current_file = st.session_state.get("file_name", "Unknown Document")
+                    pdf_bytes = generate_pdf_report(results, domain, current_file)
                     st.download_button("Download PDF", pdf_bytes, "legal_report.pdf", "application/pdf", use_container_width=True)
                 except Exception as e:
                     st.error(f"PDF error: {e}")
@@ -546,24 +547,26 @@ def _render_agentic_panel(
                 conf = cur["confidence"]
                 
                 # ── Custom AI Report Styling ──
-                risk_color = "#ef4444" if risk == "High" else "#f97316" if risk == "Medium" else "#22c55e"
-                risk_bg    = "#fef2f2" if risk == "High" else "#fff7ed" if risk == "Medium" else "#f0fdf4"
+                # Dynamic adaptive colors working in both Dark & Light Themes using RGBA transparency
+                risk_color = "rgb(239, 68, 68)" if risk == "High" else "rgb(249, 115, 22)" if risk == "Medium" else "rgb(34, 197, 94)"
+                risk_bg_subtle = "rgba(239, 68, 68, 0.05)" if risk == "High" else "rgba(249, 115, 22, 0.05)" if risk == "Medium" else "rgba(34, 197, 94, 0.05)"
+                border_color = "rgba(0,0,0,0.05)"
                 
                 st.markdown(f"""
-                <div style="border-left: 5px solid {risk_color}; padding: 15px 20px; background: {risk_bg}; border-radius: 6px; border-right: 1px solid rgba(0,0,0,0.05); border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 24px;">
-                    <h3 style="margin-top: 0; margin-bottom: 15px; color: #0f172a; font-weight: 700; letter-spacing: -0.01em;">Clause {r_num} Breakdown</h3>
+                <div style="border-left: 5px solid {risk_color}; padding: 15px 20px; background: {risk_bg_subtle}; border-radius: 6px; border-right: 1px solid var(--secondary-background-color); border-top: 1px solid var(--secondary-background-color); border-bottom: 1px solid var(--secondary-background-color); margin-bottom: 24px;">
+                    <h3 style="margin-top: 0; margin-bottom: 15px; color: var(--text-color); font-weight: 700; letter-spacing: -0.01em;">Clause {r_num} Breakdown</h3>
                     <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.9rem;">
-                        <span style="background: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>Risk Bearer:</strong> <span style="color:#334155;">{an.get('who_bears_the_risk', 'Unknown')}</span></span>
-                        <span style="background: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>ML Risk:</strong> <span style="color: {risk_color}; font-weight: 700;">{risk}</span></span>
-                        <span style="background: rgba(255,255,255,0.75); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>Action:</strong> <span style="color:#334155;">{an.get('action_required', 'Review')}</span></span>
+                        <span style="background: var(--background-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--secondary-background-color); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>Risk Bearer:</strong> <span style="opacity: 0.85;">{an.get('who_bears_the_risk', 'Unknown')}</span></span>
+                        <span style="background: var(--background-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--secondary-background-color); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>ML Risk:</strong> <span style="color: {risk_color}; font-weight: 700;">{risk}</span></span>
+                        <span style="background: var(--background-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--secondary-background-color); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>Action:</strong> <span style="opacity: 0.85;">{an.get('action_required', 'Review')}</span></span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 st.markdown(f"""
                 <div style="margin-bottom:24px;">
-                    <h5 style="color: #3b82f6; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #eff6ff; padding-bottom: 6px;">What It Says</h5>
-                    <div style="background: #f8fafc; padding: 16px 20px; border-radius: 8px; color: #334155; font-size: 0.95rem; border: 1px solid #e2e8f0; line-height: 1.6;">
+                    <h5 style="color: #3b82f6; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid rgba(59,130,246,0.1); padding-bottom: 6px;">What It Says</h5>
+                    <div style="background: var(--secondary-background-color); padding: 16px 20px; border-radius: 8px; color: var(--text-color); font-size: 0.95rem; border: 1px solid rgba(128,128,128,0.1); line-height: 1.6;">
                         {an.get('plain_english_summary', '—')}
                     </div>
                 </div>
@@ -575,7 +578,7 @@ def _render_agentic_panel(
                         st.markdown(f"""
                         <div style="margin-bottom:20px;">
                             <h5 style="color: #ef4444; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px;">Why It's Risky</h5>
-                            <div style="background: #fef2f2; padding: 16px; border-radius: 8px; color: #991b1b; font-size: 0.9rem; border: 1px solid #fecaca; min-height: 120px; line-height: 1.6;">
+                            <div style="background: rgba(239, 68, 68, 0.05); padding: 16px; border-radius: 8px; color: var(--text-color); font-size: 0.9rem; border: 1px solid rgba(239, 68, 68, 0.2); min-height: 120px; line-height: 1.6;">
                                 {an.get('what_makes_it_risky', '—')}
                             </div>
                         </div>
@@ -584,7 +587,7 @@ def _render_agentic_panel(
                         st.markdown(f"""
                         <div style="margin-bottom:20px;">
                             <h5 style="color: #10b981; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px;">{domain} Practice</h5>
-                            <div style="background: #ecfdf5; padding: 16px; border-radius: 8px; color: #065f46; font-size: 0.9rem; border: 1px solid #a7f3d0; min-height: 120px; line-height: 1.6;">
+                            <div style="background: rgba(16, 185, 129, 0.05); padding: 16px; border-radius: 8px; color: var(--text-color); font-size: 0.9rem; border: 1px solid rgba(16, 185, 129, 0.2); min-height: 120px; line-height: 1.6;">
                                 {an.get('industry_standard_practice', '—')}
                             </div>
                         </div>
@@ -592,8 +595,8 @@ def _render_agentic_panel(
                         
                     st.markdown(f"""
                     <div style="margin-bottom:24px;">
-                        <h5 style="color: #8b5cf6; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #f5f3ff; padding-bottom: 6px;">Negotiation & Mitigation</h5>
-                        <div style="background: #f5f3ff; padding: 16px 20px; border-radius: 8px; color: #4c1d95; font-size: 0.95rem; border: 1px solid #ddd6fe; line-height: 1.6;">
+                        <h5 style="color: #8b5cf6; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid rgba(139, 92, 246, 0.1); padding-bottom: 6px;">Negotiation & Mitigation</h5>
+                        <div style="background: rgba(139, 92, 246, 0.05); padding: 16px 20px; border-radius: 8px; color: var(--text-color); font-size: 0.95rem; border: 1px solid rgba(139, 92, 246, 0.2); line-height: 1.6;">
                             {an.get('negotiation_tips', '—')}
                         </div>
                     </div>
@@ -607,14 +610,14 @@ def _render_agentic_panel(
                     st.code(an.get('safer_rewrite', '—'), language=None)
                 else:
                     st.markdown(f"""
-                    <div style="margin-bottom:24px; background: #f0fdf4; padding: 16px 20px; border-radius: 8px; border: 1px solid #bbf7d0; border-left: 4px solid #22c55e;">
-                        <h5 style="color: #166534; font-size: 1.05rem; font-weight: 600; margin-bottom: 6px;">Assessment</h5>
-                        <span style="color: #15803d; font-size: 0.95rem;">This clause is standard and lower risk. No immediate modifications required.</span>
+                    <div style="margin-bottom:24px; background: rgba(34,197,94,0.05); padding: 16px 20px; border-radius: 8px; border: 1px solid rgba(34,197,94,0.2); border-left: 4px solid #22c55e;">
+                        <h5 style="color: #16a34a; font-size: 1.05rem; font-weight: 600; margin-bottom: 6px;">Assessment</h5>
+                        <span style="color: var(--text-color); opacity: 0.85; font-size: 0.95rem;">This clause is standard and lower risk. No immediate modifications required.</span>
                     </div>
                     """, unsafe_allow_html=True)
 
                 with st.expander("Show Original Clause Text"):
-                    st.markdown(f"""<div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; padding: 15px; background: #f8fafc; border-radius: 6px; color: #475569; border: 1px solid #e2e8f0; max-height: 250px; overflow-y: auto;">{cur["clause_text"]}</div>""", unsafe_allow_html=True)
+                    st.markdown(f"""<div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; padding: 15px; background: var(--secondary-background-color); border-radius: 6px; color: var(--text-color); border: 1px solid rgba(128,128,128,0.1); max-height: 250px; overflow-y: auto;">{cur["clause_text"]}</div>""", unsafe_allow_html=True)
             else:
                 st.info("The first clause is currently being analyzed by the AI...")
 
