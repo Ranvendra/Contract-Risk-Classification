@@ -547,25 +547,23 @@ def _render_agentic_panel(
                 conf = cur["confidence"]
                 
                 # ── Custom AI Report Styling ──
-                # Dynamic adaptive colors working in both Dark & Light Themes using RGBA transparency
                 risk_color = "rgb(239, 68, 68)" if risk == "High" else "rgb(249, 115, 22)" if risk == "Medium" else "rgb(34, 197, 94)"
                 risk_bg_subtle = "rgba(239, 68, 68, 0.05)" if risk == "High" else "rgba(249, 115, 22, 0.05)" if risk == "Medium" else "rgba(34, 197, 94, 0.05)"
-                border_color = "rgba(0,0,0,0.05)"
                 
                 st.markdown(f"""
                 <div style="border-left: 5px solid {risk_color}; padding: 15px 20px; background: {risk_bg_subtle}; border-radius: 6px; border-right: 1px solid var(--secondary-background-color); border-top: 1px solid var(--secondary-background-color); border-bottom: 1px solid var(--secondary-background-color); margin-bottom: 24px;">
                     <h3 style="margin-top: 0; margin-bottom: 15px; color: var(--text-color); font-weight: 700; letter-spacing: -0.01em;">Clause {r_num} Breakdown</h3>
                     <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.9rem;">
-                        <span style="background: var(--background-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--secondary-background-color); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>Risk Bearer:</strong> <span style="opacity: 0.85;">{an.get('who_bears_the_risk', 'Unknown')}</span></span>
-                        <span style="background: var(--background-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--secondary-background-color); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>ML Risk:</strong> <span style="color: {risk_color}; font-weight: 700;">{risk}</span></span>
-                        <span style="background: var(--background-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--secondary-background-color); box-shadow: 0 1px 2px rgba(0,0,0,0.02);"><strong>Action:</strong> <span style="opacity: 0.85;">{an.get('action_required', 'Review')}</span></span>
+                        <span style="background: var(--background-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--secondary-background-color); box-shadow: 0 1px 2px rgba(0,0,0,0.02); color: var(--text-color);"><strong>Risk Bearer:</strong> <span style="opacity: 0.85;">{an.get('who_bears_the_risk', 'Unknown')}</span></span>
+                        <span style="background: var(--background-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--secondary-background-color); box-shadow: 0 1px 2px rgba(0,0,0,0.02); color: var(--text-color);"><strong>ML Risk:</strong> <span style="color: {risk_color}; font-weight: 700;">{risk}</span></span>
+                        <span style="background: var(--background-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--secondary-background-color); box-shadow: 0 1px 2px rgba(0,0,0,0.02); color: var(--text-color);"><strong>Action:</strong> <span style="opacity: 0.85;">{an.get('action_required', 'Review')}</span></span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 st.markdown(f"""
                 <div style="margin-bottom:24px;">
-                    <h5 style="color: #3b82f6; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid rgba(59,130,246,0.1); padding-bottom: 6px;">What It Says</h5>
+                    <h5 style="color: #3b82f6; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #eff6ff; padding-bottom: 6px;">What It Says</h5>
                     <div style="background: var(--secondary-background-color); padding: 16px 20px; border-radius: 8px; color: var(--text-color); font-size: 0.95rem; border: 1px solid rgba(128,128,128,0.1); line-height: 1.6;">
                         {an.get('plain_english_summary', '—')}
                     </div>
@@ -595,7 +593,7 @@ def _render_agentic_panel(
                         
                     st.markdown(f"""
                     <div style="margin-bottom:24px;">
-                        <h5 style="color: #8b5cf6; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid rgba(139, 92, 246, 0.1); padding-bottom: 6px;">Negotiation & Mitigation</h5>
+                        <h5 style="color: #8b5cf6; font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; border-bottom: 2px solid #f5f3ff; padding-bottom: 6px;">Negotiation & Mitigation</h5>
                         <div style="background: rgba(139, 92, 246, 0.05); padding: 16px 20px; border-radius: 8px; color: var(--text-color); font-size: 0.95rem; border: 1px solid rgba(139, 92, 246, 0.2); line-height: 1.6;">
                             {an.get('negotiation_tips', '—')}
                         </div>
