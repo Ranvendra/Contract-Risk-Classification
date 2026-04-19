@@ -1,5 +1,9 @@
 import json
 import os
+
+# Fix for ChromaDB/Protobuf descriptor errors on modern Python versions
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 import re
 from io import BytesIO, StringIO
 
