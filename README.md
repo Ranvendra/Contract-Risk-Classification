@@ -1,91 +1,67 @@
-<img src="https://images.ctfassets.net/em6l9zw4tzag/oVfiswjNH7DuCb7qGEBPK/b391db3a1d0d3290b96ce7f6aacb32b0/python.png" height="70" alt="Python"/> &nbsp; <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/streamlit-icon.png" height="70" alt="Streamlit"/> &nbsp; <img src="https://png.pngtree.com/png-clipart/20250210/original/pngtree-blue-robot-toys-png-image_20412795.png" height="70" alt="Scikit-Learn"/>
+<img src="https://images.ctfassets.net/em6l9zw4tzag/oVfiswjNH7DuCb7qGEBPK/b391db3a1d0d3290b96ce7f6aacb32b0/python.png" height="70" alt="Python"/> &nbsp; <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/streamlit-icon.png" height="70" alt="Streamlit"/> &nbsp; <img src="https://png.pngtree.com/png-clipart/20250210/original/pngtree-blue-robot-toys-png-image_20412795.png" height="70" alt="Scikit-Learn"/> &nbsp; <img src="https://adibrata.com/wp-content/uploads/2024/09/LangGraph-logo.webp" height="70" alt="LangGraph"/>
 
-# Intelligent Contract Risk Analysis
+# Intelligent Contract Risk Analysis - Agentic AI Legal Assistance Tool
 
-**Phase: Milestone 1 - ML-Based Contract Risk Classification**
-
-📄 **[View Full Technical Project Report (Overleaf/LaTeX)](https://www.overleaf.com/read/kyynvqpgcptg#ab2768)**
-
-An AI-driven legal document analysis system that evaluates contractual risk. This project applies classical machine learning and Natural Language Processing (NLP) techniques to analyze contract text, segment clauses, and identify potential risk patterns **without the use of Large Language Models (LLMs) or Generative AI**.
+An advanced AI-driven legal document analysis system that evaluates contractual risk. This project extends our initial machine learning classification system into a fully autonomous agentic AI legal assistance tool that reasons about contract risks, retrieves legal best practices, and generates structured risk reports.
 
 ---
 
-## Project Overview & Problem Statement
+## 🎯 Objective
 
-This repository contains the **Milestone 1** implementation of the _Intelligent Contract Risk Analysis_ project.
+Extend the analysis system into an agentic AI legal assistance tool that autonomously reasons about contract risks, retrieves legal best practices, and generates structured risk reports.
 
-**Problem Statement:** Legal professionals spend countless hours manually reviewing lengthy contracts to identify risky clauses, liability caps, and termination conditions. This manual process is prone to human error and inefficiency.
-**Solution:** Our system automates this process by parsing raw contract documents (PDFs/Text), splitting them into evaluable clauses, and utilizing supervised Machine Learning models to classify each clause's inherent risk (High, Medium, Low).
+## ⚙️ Functional Requirements
 
-### Core Declaration
+- **Accept legal queries and analyzed contract data**: Seamlessly process user-uploaded contract documents (PDF/Text).
+- **Analyze contract risk patterns autonomously**: Extract evaluable clauses and automatically identify risk areas utilizing intelligent components.
+- **Retrieve relevant legal guidelines/standards**: Dynamically fetch contextual legal best practices and industry-standard alternative clauses.
+- **Generate structured risk assessment reports**: Automatically synthesize a high-fidelity, client-ready summary of findings and recommended actions.
 
-**This project strictly adheres to the "No GenAI" rule.** All parsing, feature engineering (TF-IDF), model training, and logic implementation are explicitly written and engineered by the team using traditional Python data science libraries (Scikit-learn, Pandas, NLTK/SpaCy) without reliance on generative AI outputs for core inference.
+## 🛠️ Technical Requirements (Agentic)
 
-## Technical Depth & Sub-Features
+- **Framework:** LangGraph (Workflow & State). Orchestrates the pipeline nodes efficiently.
+- **RAG:** Retrieval of legal standards (Chroma/FAISS / local TF-IDF Knowledge Base).
+- **State:** Explicit state management across steps. The `AgentState` gracefully propagates data and isolated errors without disruption.
+- **Prompting:** Strict prompting strategies configured with constrained output schemas to significantly reduce hallucinations.
 
-Our system incorporates three distinct sub-features beyond basic classification:
+## 📊 Structured Output
 
-1. **Custom Data Pipeline & Preprocessing**: We developed a custom clause segmentation pipeline that processes the complex `CUAD_v1` JSON dataset, extracts relevant clauses, tokenizes text, and maps 41 distinct legal clause types into 3 standardized risk categories for model consumption.
-2. **Confidence-Scored Real-Time Inference**: The Streamlit interface performs real-time inference on uploaded documents. It not only classifies text but calculates and displays the model's _probability confidence score_, allowing human operators to set dynamic "Confidence Thresholds".
-3. **Interactive Analytical Dashboard**: A comprehensive UI built with Plotly Express that provides a visual executive summary, tracking 'Risk Intensity' across the document's positional timeline, and extracting Top Keywords natively from high-risk clauses.
+For every parsed contract, the system generates deep actionable intelligence organized into these components:
 
-## Dataset & EDA
+- **Problem understanding & Legal use case:** Tailored intelligence explicitly built to aid legal and business reviewers.
+- **Input–output specification:** Clear transparency tracking raw clause extraction, inference, and final analysis.
+- **System architecture diagram:** Orchestration between the Interface, ML Classifier, RAG Retrieval, and the LangGraph Reasoning agent.
+- **Working local application with UI:** Interactive local dashboard indicating confidence scores and progress.
+- **Model performance & NLP evaluation:** Base F1 risk categorization overlaid with qualitative LLM reasoning accuracy.
+- **Summary:** Contract overview & Risk severity breakdown.
+- **Deep Dive:** Clause references & Plain-English Explanations defining exact liabilities.
+- **Mitigation:** Recommended strategic actions, negotiation tips, and safer rewritten clauses.
+- **Disclaimer:** Prominent Legal & Ethical notices clarifying the system boundary.
 
-**Data Source**: We utilized the **CUAD (Contract Understanding Atticus Dataset)** `CUAD_v1.json`.
+---
 
-- **EDA Insights**: During exploration, we identified 41 highly specific clause types across 510 commercial contracts. We observed severe class imbalances and varying text lengths. This insight informed our decision to map these into overarching 'High/Medium/Low' risk buckets to maintain robust classification boundaries. Our processed dataset yielded balanced training features representing thousands of individual clauses.
-
-## Methodology & Optimisation
-
-1. **Preprocessing**: Handled raw contract text through formatting, lowercasing, stop-word removal, and regex-based punctuation stripping. Paragraphs are segmented into logical individual clauses.
-2. **Feature Engineering**: We utilized **TF-IDF (Term Frequency-Inverse Document Frequency)** set to extract up to 5000 maximum features involving unigrams and bigrams (`ngram_range=(1,2)`). This numerical vectorization maps text frequency against corpus ubiquity.
-3. **Models Evaluated**:
-   - Logistic Regression
-   - Decision Tree Classifier
-   - Random Forest Classifier
-4. **Optimisation & Selection**: To prevent data leakage, we employed `Scikit-Learn Pipelines` paired with **5-Fold Stratified Cross-Validation**.
-   - _Design Justification_: **Logistic Regression** was ultimately selected as our final production model due to its superior F1-Score (0.8859), efficiency in high-dimensional TF-IDF spaces, and explainability via probabilistic outputs, outperforming tree-based ensemble methods.
-
-## Evaluation Metrics
-
-Based on our 5-Fold Cross Validation on the training data:
-
-- **Logistic Regression (Deployed Model)**:
-  - Accuracy: 0.8856
-  - F1-Score (Weighted): 0.8859
-- **Decision Tree**: F1-Score: 0.8084
-- **Random Forest**: F1-Score: 0.8058
-
-## Technology Stack & Tool Deep-Dive
-
-- **UI Framework**: [Streamlit](https://streamlit.io/) (Rapid frontend deployment for Python data apps).
-- **Machine Learning**: `Scikit-Learn` (Core library for TF-IDF vectorization, Pipeline creation, classification algorithms, and cross-validation).
-- **Data Manipulation**: `Pandas` (Dataframe structuring and CSV I/O) & `NumPy`.
-- **Visualizations**: `Plotly Express` (Interactive, web-native charting).
-- **PDF Extraction**: `PyPDF2` (Parsing text systematically from raw contract PDFs).
-- **Serialization**: `pickle` (Exporting and loading the production pipeline state).
-
-## System Architecture / Code Structure
-
-Data flows from the user interface to the inference engine and back as structured analytical metrics.
+## 🏗️ System Architecture / Code Structure
 
 ```text
 Contract-Risk-Classification/
-├── CUAD_Dataset/          # Raw CUAD v1 dataset
-├── data/                  # Processed datasets and tabular outputs
+├── CUAD_Dataset/                  # Raw CUAD v1 dataset repository
+├── data/
+│   └── legal_best_practices.json  # Curated KB for RAG retrieval
 ├── models/
-│   └── best_model.pkl     # Deployed ML pipeline (TF-IDF + Logistic Regression)
-├── src/                   # Jupyter Notebooks detailing the data pipeline
-│   ├── 1_inspect.ipynb
-│   ├── 2_data_preprocessing.ipynb
-│   ├── 3_feature_engineering.ipynb
-│   ├── 4_train.ipynb
-│   └── 5_evaluate.ipynb
-├── app.py                 # Main Streamlit web application & Inference Engine
-└── requirements.txt       # Project python dependencies
+│   └── best_model.pkl             # Deployed ML pipeline (TF-IDF + LogReg)
+├── src/                           # Jupyter Notebooks detailing data/ML pipeline
+├── contract_agent/                # Agentic AI package (LangGraph, Prompts, Client)
+│   ├── workflow.py                # LangGraph StateGraph definition
+│   ├── cloud_client.py            # LLM fallback chain logic
+│   ├── kb_retriever.py            # TF-IDF RAG Retriever
+│   └── ...
+├── app.py                         # Main Streamlit web application & Inference Engine
+├── README.md                      # This Project documentation page
+├── milestone2.md                  # Comprehensive Agentic architecture specification
+└── requirements.txt               # Project python dependencies
 ```
 
-## Installation & Setup
+## 🚀 Installation & Setup
 
 ### Prerequisites
 
@@ -94,11 +70,19 @@ Make sure you have Python 3.8+ installed on your system.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/Contract-Risk-Classification.git
+git clone https://github.com/ashyou09/Contract-Risk-Classification.git
 cd Contract-Risk-Classification
 ```
 
-### 2. Auto-Install & Run Application
+### 2. Configure Environment
+
+Copy the `.env.example` file to `.env` and fill in your keys (required for cloud model capabilities):
+
+```bash
+cp .env.example .env
+```
+
+### 3. Auto-Install & Run Application
 
 We have implemented an automated startup script that will automatically create a secure Python virtual environment, download all necessary dependencies without throwing errors, and launch the UI.
 
@@ -110,7 +94,7 @@ chmod +x run_app.sh
 
 *The script manages `requirements.txt` dynamically. If you prefer to manually install, use `pip install -r requirements.txt` followed by `streamlit run app.py`.*
 
-_Note: A live deployed version link will be generated via HuggingFace Spaces/Streamlit Community Cloud for final submission._
+---
 
 ## 👥 Team Contribution
 
@@ -121,7 +105,7 @@ _(Please update these fields with your exact team members and responsibilities b
 - **Member 3 (Shreya Suman - 2401020068)**: Scikit-learn Pipeline architecture, Trained and evaluated ML models (Logistic Regression, Decision Trees), performed Cross-validation,Streamlit UI.
 
 - **Member 4 (Avishkar Meher - 2401010116)**: Contributed to quality assurance checks and supporting end-to-end integration testing. Participated in structuring and workflow refinement to ensure project readiness.
+
 ---
 
-**Disclaimer:** This tool is an academic project designed for educational purposes to demonstrate ML-based analysis. It does NOT constitute professional legal advice.
-`
+**Disclaimer:** This tool is an academic project designed for educational purposes to demonstrate ML-based analysis and autonomous AI reasoning. It does NOT constitute professional legal advice.
