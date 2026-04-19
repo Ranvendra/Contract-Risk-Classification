@@ -1,65 +1,331 @@
 <img src="https://images.ctfassets.net/em6l9zw4tzag/oVfiswjNH7DuCb7qGEBPK/b391db3a1d0d3290b96ce7f6aacb32b0/python.png" height="70" alt="Python"/> &nbsp; <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/streamlit-icon.png" height="70" alt="Streamlit"/> &nbsp; <img src="https://png.pngtree.com/png-clipart/20250210/original/pngtree-blue-robot-toys-png-image_20412795.png" height="70" alt="Scikit-Learn"/> &nbsp; <img src="https://adibrata.com/wp-content/uploads/2024/09/LangGraph-logo.webp" height="70" alt="LangGraph"/>
 
-# Intelligent Contract Risk Analysis - Agentic AI Legal Assistance Tool
+# Intelligent Contract Risk Analysis & Agentic Legal Assistance System
 
-An advanced AI-driven legal document analysis system that evaluates contractual risk. This project extends our initial machine learning classification system into a fully autonomous agentic AI legal assistance tool that reasons about contract risks, retrieves legal best practices, and generates structured risk reports.
+> **Final Integrated Submission — Milestone 1 + Milestone 2**
 
----
+An AI-driven legal document intelligence platform that evolved from a classical Machine Learning contract risk classifier into a full **Agentic AI Legal Assistant**.
 
-## 🎯 Objective
-
-Extend the analysis system into an agentic AI legal assistance tool that autonomously reasons about contract risks, retrieves legal best practices, and generates structured risk reports.
-
-## ⚙️ Functional Requirements
-
-- **Accept legal queries and analyzed contract data**: Seamlessly process user-uploaded contract documents (PDF/Text).
-- **Analyze contract risk patterns autonomously**: Extract evaluable clauses and automatically identify risk areas utilizing intelligent components.
-- **Retrieve relevant legal guidelines/standards**: Dynamically fetch contextual legal best practices and industry-standard alternative clauses.
-- **Generate structured risk assessment reports**: Automatically synthesize a high-fidelity, client-ready summary of findings and recommended actions.
-
-## 🛠️ Technical Requirements (Agentic)
-
-- **Framework:** LangGraph (Workflow & State). Orchestrates the pipeline nodes efficiently.
-- **RAG:** Retrieval of legal standards (Chroma/FAISS / local TF-IDF Knowledge Base).
-- **State:** Explicit state management across steps. The `AgentState` gracefully propagates data and isolated errors without disruption.
-- **Prompting:** Strict prompting strategies configured with constrained output schemas to significantly reduce hallucinations.
-
-## 📊 Structured Output
-
-For every parsed contract, the system generates deep actionable intelligence organized into these components:
-
-- **Problem understanding & Legal use case:** Tailored intelligence explicitly built to aid legal and business reviewers.
-- **Input–output specification:** Clear transparency tracking raw clause extraction, inference, and final analysis.
-- **System architecture diagram:** Orchestration between the Interface, ML Classifier, RAG Retrieval, and the LangGraph Reasoning agent.
-- **Working local application with UI:** Interactive local dashboard indicating confidence scores and progress.
-- **Model performance & NLP evaluation:** Base F1 risk categorization overlaid with qualitative LLM reasoning accuracy.
-- **Summary:** Contract overview & Risk severity breakdown.
-- **Deep Dive:** Clause references & Plain-English Explanations defining exact liabilities.
-- **Mitigation:** Recommended strategic actions, negotiation tips, and safer rewritten clauses.
-- **Disclaimer:** Prominent Legal & Ethical notices clarifying the system boundary.
+This project combines **NLP + Supervised Learning + Retrieval-Augmented Generation (RAG) + LangGraph multi-step reasoning workflows** to analyze contracts, detect risky clauses, explain legal concerns in plain English, and generate structured mitigation reports.
 
 ---
 
-## 🏗️ System Architecture / Code Structure
+# Project Overview
+
+Legal professionals, startups, freelancers, and businesses often sign contracts without fully understanding hidden risks such as:
+
+- Unlimited liability clauses  
+- One-sided indemnification terms  
+- Unfair termination rights  
+- Confidentiality traps  
+- Payment disputes  
+- Intellectual property ownership risks  
+
+Manual review is expensive, time-consuming, and inaccessible to many individuals.
+
+## Our Solution
+
+We designed an **Intelligent Contract Risk Analysis System** that automates contract review in two progressive phases:
+
+### Milestone 1 — ML-Based Contract Risk Detection
+
+Uses classical NLP and supervised machine learning to classify clauses into:
+
+- High Risk  
+- Medium Risk  
+- Low Risk  
+
+### Milestone 2 — Agentic AI Legal Assistant
+
+Transforms the system into an autonomous reasoning engine that:
+
+- Understands risky clauses deeply  
+- Retrieves relevant legal best practices  
+- Explains risks in plain language  
+- Suggests safer clause rewrites  
+- Generates executive-ready reports  
+
+---
+
+# Milestone 1 → Milestone 2 Evolution
+
+| Capability | Milestone 1 | Milestone 2 |
+|-----------|------------|------------|
+| PDF / Text Upload | ✅ | ✅ |
+| Clause Segmentation | ✅ | ✅ |
+| TF-IDF + Logistic Regression Classification | ✅ | ✅ |
+| Confidence Scoring | ✅ | ✅ |
+| Dashboard Visualizations | ✅ | ✅ |
+| Legal Best Practice Retrieval | ❌ | ✅ |
+| Agentic Multi-Step Reasoning | ❌ | ✅ |
+| Plain-English Explanation | ❌ | ✅ |
+| Negotiation Advice | ❌ | ✅ |
+| Safer Clause Rewrite | ❌ | ✅ |
+| JSON + Markdown Reports | ❌ | ✅ |
+| Cloud + Offline LLM Support | ❌ | ✅ |
+
+---
+
+# Core Declaration
+
+This project began as a **strict non-GenAI Milestone 1 system**, where all clause classification logic used classical Machine Learning only.
+
+Milestone 2 extends the project responsibly using controlled LLM reasoning layers supported by:
+
+- Structured prompts  
+- Retrieval-grounded responses  
+- Multi-provider fallback systems  
+- Output schema enforcement  
+- Hallucination reduction techniques  
+- Legal disclaimers  
+
+---
+
+# Technical Features
+
+## 1. Legal Clause Segmentation Engine
+
+Contracts are automatically divided into logical clauses using:
+
+- Regex boundaries  
+- Numbered sections  
+- Paragraph structures  
+- Formatting cleanup  
+
+---
+
+## 2. ML Risk Prediction Layer
+
+Each clause is classified using the trained production pipeline:
+
+- TF-IDF Vectorizer  
+- Logistic Regression
+
+Outputs:
+
+- Risk label  
+- Confidence score  
+
+---
+
+## 3. Confidence Threshold Filtering
+
+Users can dynamically filter weaker predictions.
+
+Example:
+
+- Show only clauses above 80% confidence
+
+---
+
+## 4. Retrieval-Augmented Legal Intelligence (RAG)
+
+For every risky clause, the system retrieves relevant entries from a curated legal knowledge base containing:
+
+- Industry-standard wording  
+- Balanced clause structures  
+- Negotiation norms  
+- Best practices  
+
+Implemented using:
+
+- TF-IDF similarity search  
+- Topic-aware ranking  
+- Local retrieval pipeline  
+
+---
+
+## 5. LangGraph Agentic Workflow
+
+The complete reasoning pipeline is orchestrated using **LangGraph StateGraph**.
+
+### Multi-Step Nodes:
+
+1. **Classify Node** → ML risk detection  
+2. **Research Node** → Legal best-practice retrieval  
+3. **Reason Node** → LLM deep legal analysis + reporting  
+
+---
+
+## 6. Cloud + Offline AI Modes
+
+### Online Mode
+
+Fallback chain:
+
+- OpenRouter Key 1  
+- OpenRouter Key 2  
+- Groq API  
+
+### Offline Mode
+
+Runs local LLM using **Ollama**
+
+Examples:
+
+- Qwen models  
+- Llama models  
+
+---
+
+## 7. Structured Executive Reports
+
+Final outputs generated in:
+
+### JSON Report
+
+Machine-readable structured output
+
+### Markdown Report
+
+Human-readable professional summary
+
+---
+
+# Dataset & EDA
+
+## Primary Dataset
+
+**CUAD — Contract Understanding Atticus Dataset**
+
+Used during Milestone 1 to train clause classification models.
+
+## Insights
+
+- 41 clause categories identified  
+- Strong class imbalance  
+- Variable clause lengths  
+- Complex legal vocabulary  
+
+Mapped into:
+
+- High Risk  
+- Medium Risk  
+- Low Risk  
+
+---
+
+# Methodology & Optimisation
+
+## Preprocessing
+
+- Lowercasing  
+- Stopword removal  
+- Cleaning punctuation  
+- Clause segmentation  
+
+## Feature Engineering
+
+TF-IDF with:
+
+- Up to 5000 features  
+- Unigrams + Bigrams  
+
+## Models Evaluated
+
+- Logistic Regression  
+- Decision Tree  
+- Random Forest  
+
+## Final Selection
+
+**Logistic Regression** selected because of:
+
+- Best weighted F1 score  
+- Fast inference  
+- Explainable probabilities  
+- Strong sparse-text performance  
+
+---
+
+# Evaluation Metrics
+
+| Model | Weighted F1 Score |
+|------|-------------------|
+| Logistic Regression | **0.8859** |
+| Decision Tree | 0.8084 |
+| Random Forest | 0.8058 |
+
+---
+
+# Milestone 2 Analysis Output Schema
+
+Each flagged clause receives deep reasoning across:
+
+- Plain English Summary  
+- What Makes It Risky  
+- Who Bears the Risk  
+- Severity Rationale  
+- Industry Standard Practice  
+- Negotiation Tips  
+- Safer Rewrite  
+- Recommended Action  
+
+---
+
+# Tech Stack
+
+## Machine Learning
+
+- Scikit-learn  
+- Pandas  
+- NumPy  
+
+## Agentic AI
+
+- LangGraph  
+- LangChain Core  
+
+## LLM Providers
+
+- OpenRouter  
+- Groq  
+- Ollama  
+
+## Frontend
+
+- Streamlit  
+
+## Retrieval
+
+- TF-IDF Vector Search  
+- Local Knowledge Base  
+
+## Utilities
+
+- Python Dotenv  
+- Requests  
+- Pickle  
+
+---
+
+# System Architecture
 
 ```text
-Contract-Risk-Classification/
-├── CUAD_Dataset/                  # Raw CUAD v1 dataset repository
-├── data/
-│   └── legal_best_practices.json  # Curated KB for RAG retrieval
-├── models/
-│   └── best_model.pkl             # Deployed ML pipeline (TF-IDF + LogReg)
-├── src/                           # Jupyter Notebooks detailing data/ML pipeline
-├── contract_agent/                # Agentic AI package (LangGraph, Prompts, Client)
-│   ├── workflow.py                # LangGraph StateGraph definition
-│   ├── cloud_client.py            # LLM fallback chain logic
-│   ├── kb_retriever.py            # TF-IDF RAG Retriever
-│   └── ...
-├── app.py                         # Main Streamlit web application & Inference Engine
-├── README.md                      # This Project documentation page
-├── milestone2.md                  # Comprehensive Agentic architecture specification
-└── requirements.txt               # Project python dependencies
-```
+User Uploads Contract
+        │
+        ▼
+Clause Segmentation Engine
+        │
+        ▼
+ML Risk Classification
+(TF-IDF + Logistic Regression)
+        │
+        ▼
+Flagged Risky Clauses
+        │
+        ▼
+RAG Legal Knowledge Retrieval
+        │
+        ▼
+LangGraph Agent Workflow
+ ┌──────────────┬──────────────┬──────────────┐
+ │ Classify     │ Research     │ Reason       │
+ └──────────────┴──────────────┴──────────────┘
+        │
+        ▼
+Structured JSON Report
+Markdown Executive Report
 
 ## 🚀 Installation & Setup
 
