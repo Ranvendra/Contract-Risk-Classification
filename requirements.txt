@@ -24,9 +24,10 @@ langchain-core>=0.3.0
 openai>=1.40.0
 
 # ── RAG — Domain-Aware Vector DB ──────────────────────────────────────────────
-# protobuf must be pinned: chromadb → opentelemetry-proto → protobuf has a
-# known crash on Python 3.13 when protobuf ≥ 5.x is installed.
-protobuf>=3.20.0,<5.0.0
+# protobuf must be pinned/updated:
+# - Python 3.13: protobuf ≥ 5.x had known issues with chromadb.
+# - Python 3.14+: protobuf ≥ 5.26.0 is REQUIRED to avoid metaclass crashes.
+protobuf>=5.26.0
 chromadb>=0.5.0
 sentence-transformers>=3.0.0
 
