@@ -21,6 +21,10 @@ from __future__ import annotations
 import os
 import sys
 
+# Must be set BEFORE any chromadb/protobuf imports to prevent descriptor errors
+# on Python 3.10+ with modern protobuf versions (Streamlit Cloud compatible)
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CHROMA_DB_PATH = os.path.join(BASE_DIR, "data", "chroma_db")
 COLLECTION_NAME = "legal_guidelines"
