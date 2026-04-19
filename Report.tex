@@ -1,0 +1,792 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{bookmark}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{tcolorbox}
+\usepackage{setspace}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{listingsutf8}
+
+% ── Hyperlinks ────────────────────────────────────────────
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=blue,
+    pdftitle={Final Project Report: Intelligent Contract Risk Analysis},
+}
+
+% ── Listings (code snippets) ──────────────────────────────
+\definecolor{codegray}{RGB}{247,247,247}
+\definecolor{coderule}{RGB}{180,190,210}
+\definecolor{codeblue}{RGB}{30,90,200}
+\definecolor{codegreen}{RGB}{0,120,60}
+\definecolor{codecomment}{RGB}{100,110,130}
+
+\lstset{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codegreen},
+    numbers=none,
+    frame=single,
+    framesep=6pt,
+    rulecolor=\color{coderule},
+    xleftmargin=10pt,
+    xrightmargin=10pt,
+    captionpos=b,
+    tabsize=4,
+    columns=flexible,
+    showstringspaces=false,
+}
+
+\setstretch{1.15}
+\setlength{\parskip}{0.5em}
+
+% ── Title ─────────────────────────────────────────────────
+\title{
+    \vspace{-1.5cm}
+    \textbf{\Huge Intelligent Contract Risk Analysis} \\
+    \vspace{0.6cm}
+    \Large Final Report: Milestone 1 \& Milestone 2 \\
+    \vspace{0.3cm}
+    \large Milestone 1: ML-Based Contract Risk Classification \\
+    \large Milestone 2: Agentic AI Legal Assistance System \\
+    \vspace{0.4cm}
+    \normalsize \textit{Submitted in fulfillment of the B.Tech CSE (AI) Capstone Project} \\
+    \vspace{-0.2cm}
+}
+
+\author{
+    \textbf{Newton School of Technology (NST), Sonipat} \\
+    \vspace{0.8cm} \\
+    \textbf{Team Members:} \\
+    Ashutosh Singh (2401010109) \\
+    Ranvendra Pratap Singh (2401010373) \\
+    Shreya Suman (2401020068) \\
+    Avishkar Meher (2401010116)
+}
+\date{April 2026}
+
+% ─────────────────────────────────────────────────────────
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\vspace{1cm}
+
+\begin{tcolorbox}[colback=gray!5, colframe=gray!50,
+    title=\textbf{Declaration of Technical Integrity}]
+\textbf{The ``No GenAI'' Rule:} We, the undersigned team members, formally affirm
+that the core logic of this project is our original work. All data parsing modules,
+Natural Language Processing pipelines, feature engineering implementations
+(TF-IDF vectorization), Scikit-Learn model training, and the Streamlit inference
+engine were manually and explicitly written and engineered by the team. The
+LangGraph agentic pipeline (Milestone 2) was designed and implemented
+independently, invoking external LLM APIs only for inference---not for generating
+any project code or logic. We have adhered strictly to the grading rubric throughout
+both milestones.
+\end{tcolorbox}
+
+\newpage
+\tableofcontents
+\newpage
+
+% =============================================================
+\section{Problem Statement}
+\label{sec:problem}
+% =============================================================
+
+Modern corporate entities and legal firms process thousands of complex legal
+contracts quarterly, ranging from Non-Disclosure Agreements (NDAs) to multi-million
+dollar vendor agreements. The manual review of these documents is notoriously
+labour-intensive, time-consuming, and highly susceptible to human error. Legal
+professionals must meticulously scan dozens of pages of dense legal jargon to
+locate and evaluate specific clauses related to indemnification, financial
+liabilities, non-competes, and arbitrary termination conditions.
+
+The objective of this project is to design, implement, and deploy an intelligent,
+end-to-end contract analysis system that operates across two progressive milestones:
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item \textbf{Milestone 1:} A supervised machine-learning pipeline that accepts
+    raw unstructured contract text, intelligently segments it into individual clauses,
+    and accurately classifies each clause into one of three actionable risk categories
+    (\textbf{High, Medium, Low}).
+
+    \item \textbf{Milestone 2:} An agentic AI system built on \textbf{LangGraph}
+    that extends the ML pipeline with domain detection, Retrieval-Augmented Generation
+    (RAG) from a legal knowledge base, and structured LLM-generated analysis reports
+    including plain-English summaries, negotiation strategies, and safer clause
+    rewrites.
+\end{itemize}
+
+By flagging high-severity clauses and providing quantitative confidence scores and
+actionable legal guidance, this system drastically reduces the initial review burden
+for legal teams.
+
+% =============================================================
+\section{Data Description}
+\label{sec:data}
+% =============================================================
+
+\textbf{Source \& Provenance:} The machine learning pipeline was trained and
+evaluated using the \textbf{Contract Understanding Atticus Dataset (CUAD) v1}, a
+high-quality open-source corpus curated by expert legal professionals for NLP
+research in the legal domain.
+
+\vspace{0.2cm}
+\noindent\textbf{Corpus Structure:} The raw dataset consists of a nested JSON
+architecture containing \textbf{510 unique, fully annotated commercial contracts}.
+Each document is structured hierarchically with 41 distinct legal clause types
+annotated via expert Question-Answer (QA) pairs.
+
+\vspace{0.2cm}
+\noindent\textbf{Extraction Schema:} Our custom data pipeline parsed the JSON
+natively. It filtered out all text blocks where the QA \texttt{is\_impossible} flag
+was set to \texttt{true} (indicating that clause did not exist in the contract). For
+valid clauses, the system extracted the \texttt{clause\_type} and the exact legal
+text string from the \texttt{answers} key. Final processed output: \textbf{7.1 MB CSV}
+containing 12,679 viable clause-level training examples.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Property} & \textbf{Value} \\
+\midrule
+Total Contracts & 510 commercial contracts \\
+Clause Types & 41 distinct legal clause categories \\
+Source Format & JSON (structured annotation) \\
+Domain Coverage & Commercial, Employment, NDA, SaaS, Vendor, Lease \\
+Annotation Method & Expert legal professionals \\
+Total Extracted Clauses & 12,679 (after filtering) \\
+Processed CSV Size & 7.1 MB \\
+\bottomrule
+\end{tabular}
+\caption{CUAD v1 Dataset Summary}
+\end{table}
+
+% =============================================================
+\section{Exploratory Data Analysis}
+\label{sec:eda}
+% =============================================================
+
+During the EDA phase, we systematically traversed the entire dataset to understand
+the fundamental statistical properties of the legal text corpus. Several critical
+insights shaped our methodology:
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item \textbf{High Cardinality and Severe Class Imbalance:} The dataset natively
+    contains 41 specific legal clause types. General boilerplate clauses (such as
+    \textit{Governing Law}, \textit{Signatures}) appeared at drastically higher
+    frequencies than severe penal clauses (like \textit{Liquidated Damages} or
+    \textit{Uncapped Liability}).
+
+    \item \textbf{Variable Context Lengths:} Significant variance was observed in
+    text token lengths. Some clauses consisted of a single sentence, others (like IP
+    Ownership clauses) spanned multiple dense paragraphs.
+
+    \item \textbf{Contextual Ambiguity:} The same clause type could carry different
+    effective risk levels depending on specific terms used (e.g., ``mutual'' vs.\
+    ``unilateral'' indemnity).
+\end{itemize}
+
+\subsection*{Strategic Risk Mapping}
+
+Predicting 41 heavily imbalanced classes using classical ML algorithms leads to
+severe overfitting. To resolve this, we engineered a mapping architecture that
+consolidated the 41 clause types into three actionable risk tranches:
+
+\begin{enumerate}
+    \item \textbf{High Risk:} Clauses inflicting severe financial, operational, or
+    legal threats (e.g., Uncapped Liabilities, Termination for Convenience,
+    Non-Competes, IP Ownership Assignments, Indemnification).
+
+    \item \textbf{Medium Risk:} Clauses establishing operational friction or moderate
+    constraints (e.g., Audit Rights, Insurance Requirements, Auto-Renewal,
+    Arbitration clauses).
+
+    \item \textbf{Low Risk:} Standard administrative or boilerplate language carrying
+    no active threat (e.g., Governing Law, Dates, Notice Requirements).
+\end{enumerate}
+
+This consolidated the data into a healthy 3-class distribution:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Risk Class} & \textbf{Clause Count} & \textbf{Proportion} \\
+\midrule
+Low Risk & 5,629 & 44.4\% \\
+Medium Risk & 4,340 & 34.2\% \\
+High Risk & 2,710 & 21.4\% \\
+\midrule
+\textbf{Total} & \textbf{12,679} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\caption{Risk Class Distribution After Consolidation}
+\end{table}
+
+% =============================================================
+\section{Milestone 1: ML-Based Contract Risk Classification}
+\label{sec:milestone1}
+% =============================================================
+
+\begin{tcolorbox}[colback=gray!5, colframe=gray!50]
+\textbf{Objective:} Design and implement a supervised ML-based contract analysis
+system that classifies clauses by risk level using classical NLP techniques,
+\textit{without the use of Large Language Models or Generative AI}.
+\end{tcolorbox}
+
+\subsection{Preprocessing Pipeline}
+
+Raw legal text is inherently noisy and full of formatting artifacts. Our cleaning
+function executed the following systematic standardisations:
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item \textbf{Case Normalisation:} All text transformed to lowercase for term
+    uniformity.
+
+    \item \textbf{Regex Scrubbing:} Stripped extraneous whitespace and special
+    non-alphanumeric symbols, while intentionally retaining essential punctuation
+    (\texttt{.,;:-'"()}) to preserve structural clause boundaries.
+
+    \item \textbf{Clause Segmentation:} Contracts split on double-newline boundaries
+    and sub-clause markers (numbered and lettered), retaining only segments
+    exceeding 50 characters to filter out headings and formatting artifacts.
+\end{itemize}
+
+\subsection{Feature Engineering: TF-IDF Vectorisation}
+
+To make text comprehensible to learning algorithms, we utilised \textbf{Term
+Frequency-Inverse Document Frequency (TF-IDF)}:
+
+\begin{equation}
+\text{TF-IDF}(t, d, D) =
+\underbrace{\frac{f_{t,d}}{\sum_{t' \in d} f_{t',d}}}_{\text{Term Frequency}}
+\times
+\underbrace{\log\frac{|D|}{|\{d \in D : t \in d\}|}}_{\text{Inverse Document Frequency}}
+\end{equation}
+
+\begin{enumerate}
+    \item \textbf{Vocabulary Constraints:} \texttt{max\_features=5000}. This
+    dimensionality reduction prevents the model from memorising rare names or dates
+    unique to specific contracts, forcing it to learn actual legal syntax.
+
+    \item \textbf{N-Gram Architecture:} \texttt{ngram\_range=(1,2)}. Captures
+    standalone legal terms (unigrams: ``liability'') and essential contextual
+    pairings (bigrams: ``breach of'', ``not exceed'', ``force majeure'').
+
+    \item \textbf{Stop Word Removal:} Standard English stop words removed to
+    eliminate structural noise.
+\end{enumerate}
+
+\subsection{Algorithms Evaluated}
+
+\begin{enumerate}
+    \item \textbf{Logistic Regression:} Selected for its efficiency in high-dimensional
+    sparse spaces (5000-feature TF-IDF matrices). Provides calibrated probabilistic
+    outputs via \texttt{predict\_proba}, enabling the custom confidence thresholding
+    feature in the UI.
+
+    \item \textbf{Decision Tree Classifier:} Evaluated to determine whether
+    non-linear hierarchical branching rules outperformed linear boundaries.
+
+    \item \textbf{Random Forest Classifier:} Bootstrap-aggregation ensemble specifically
+    evaluated to combat the high variance and overfitting observed in isolated
+    Decision Trees.
+\end{enumerate}
+
+\subsection{Optimisation Strategies}
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+    \item \textbf{Pipeline Architecture (Preventing Data Leakage):} The
+    \texttt{TfidfVectorizer} was encapsulated directly \emph{inside} a Scikit-Learn
+    \texttt{Pipeline} object alongside the classifier. This guarantees the vectorizer
+    fits only on the training split of every cross-validation fold, never seeing
+    holdout data.
+
+    \item \textbf{Class Weighting:} Logistic Regression was instantiated with
+    \texttt{class\_weight='balanced'}. This adjusts the internal cost function to
+    penalise misclassifications on the minority High Risk class more severely than
+    errors on the majority Low Risk class.
+
+    \item \textbf{5-Fold Stratified Cross-Validation:} Stratification ensured the
+    relative class distribution of High/Medium/Low clauses remained strictly identical
+    across all training and holdout folds, producing statistically reliable generalisa\-tion estimates.
+\end{enumerate}
+
+\subsection{Evaluation Results}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Model Architecture} & \textbf{CV Accuracy} & \textbf{CV F1 (Weighted)} & \textbf{CV Precision} \\
+\midrule
+\textbf{Logistic Regression} & \textbf{88.56\%} & \textbf{0.8859} & \textbf{0.8861} \\
+Decision Tree Classifier & 81.17\% & 0.8084 & 0.8091 \\
+Random Forest Classifier & 81.38\% & 0.8058 & 0.8176 \\
+\bottomrule
+\end{tabular}
+\caption{Model Comparison --- 5-Fold Stratified Cross-Validation}
+\end{table}
+
+\textbf{Why F1-Score?} While Accuracy is reported, we relied on the \textbf{Weighted
+F1-Score} as the determinant metric. In legal risk analysis, False Negatives
+(missing a High-Risk liability cap) are legally disastrous. The F1 harmonic mean
+properly balances precision/recall tradeoffs.
+
+\textbf{Final Selection:} Logistic Regression decisively outperformed tree-based
+methods with a near 89\% F1-Score and was serialised as \texttt{best\_model.pkl}
+for production inference.
+
+\subsection{Milestone 1 Streamlit Dashboard}
+
+The trained model was deployed as an interactive Streamlit dashboard featuring:
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item Drag-and-drop PDF/TXT contract upload with instant text extraction via PyPDF2.
+    \item Real-time metric cards showing High/Medium/Low clause counts and average
+    confidence.
+    \item Plotly Express visualisations: Risk distribution pie chart, confidence score
+    histogram, risk intensity timeline, and top-keywords bar chart.
+    \item Paginated, collapsible clause cards with risk labels, confidence percentages,
+    and expandable full text.
+    \item Confidence Threshold Slider: Dynamic filter to surface only
+    high-confidence predictions (e.g., only flag clauses with $>$0.70 probability).
+    \item One-click CSV export of the complete classified results.
+\end{itemize}
+
+% =============================================================
+\section{Milestone 2: Agentic AI Legal Assistance System}
+\label{sec:milestone2}
+% =============================================================
+
+\begin{tcolorbox}[colback=gray!5, colframe=gray!50]
+\textbf{Objective:} Extend the ML classification system into a fully agentic AI
+legal assistance tool that autonomously reasons about contract risks, retrieves
+domain-specific legal best practices from a vector knowledge base, and generates
+structured, actionable reports using Large Language Models.
+\end{tcolorbox}
+
+\subsection{Architecture Overview: From Static ML to Agentic AI}
+
+Milestone 2 transforms the system from a \textbf{static ML classifier} into a
+\textbf{fully agentic AI pipeline}. The trained Logistic Regression model from
+Milestone 1 is now the \emph{entry point} of a multi-step autonomous reasoning
+pipeline---not the final output.
+
+The pipeline is orchestrated by a \textbf{LangGraph StateGraph} with four sequential
+nodes sharing a single immutable \texttt{AgentState} TypedDict object:
+
+\begin{center}
+\begin{tabular}{@{}ccccc@{}}
+\textbf{[S]} $\rightarrow$ &
+\textbf{Node 1} & $\rightarrow$ & \textbf{Node 2} & $\rightarrow$ \\
+& Domain Detect & & ML Classify & \\[4pt]
+\textbf{Node 3} & $\rightarrow$ & \textbf{Node 4} & $\rightarrow$ & \textbf{[E]} \\
+RAG Research & & LLM Reason & & Output \\
+\end{tabular}
+\end{center}
+
+The key architectural property is \texttt{total=False} on the TypedDict, meaning
+each node writes only the keys it produces, enabling clean error propagation and
+full traceability at every stage. The compiled \texttt{StateGraph} is cached via
+\texttt{@lru\_cache(maxsize=1)} to avoid re-compilation on every request.
+
+\subsection{Node 1: Contract Domain Detection}
+
+Before clause-level analysis begins, the system determines the contract's legal
+domain. This label is used to filter RAG results, inject domain-specific context
+into LLM prompts, and tag all outputs. Detection uses a two-stage algorithm:
+
+\begin{enumerate}
+    \item \textbf{Stage 1 --- Keyword Scoring (Zero API Cost):} A weighted regex
+    signal table is applied against the first 3,000 characters of the document.
+    Each of the 5 specific domains (NDA, Employment, Lease, SaaS, Vendor) has
+    curated patterns with confidence weights on a 1--5 scale. Score $\geq 8$ = high
+    confidence; $\geq 4$ = medium confidence.
+
+    \item \textbf{Stage 2 --- LLM Fallback (When Score $<$ 4):} A single lightweight
+    LLM call is made using Groq (free tier) with \texttt{max\_tokens=5} to
+    disambiguate. The prompt instructs the model to return only one word from:
+    \texttt{NDA | Employment | Lease | SaaS | Vendor | General}.
+\end{enumerate}
+
+Six domains are supported: NDA, Employment, Lease, SaaS, Vendor, and General Commercial.
+
+\subsection{Node 2: ML Risk Classification}
+
+This node bridges Milestone 1 and Milestone 2. It loads the pre-trained Logistic
+Regression pipeline from \texttt{models/best\_model.pkl} and:
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item Segments the contract via \texttt{segment\_clauses()}.
+    \item Runs \texttt{model.predict()} and \texttt{model.predict\_proba()} to get
+    risk label and confidence.
+    \item Applies the user-specified confidence threshold.
+    \item Forwards \textbf{only High and Medium} risk clauses to downstream nodes,
+    skipping Low-risk clauses to conserve LLM API tokens.
+    \item Truncates clauses exceeding 2,000 characters to stay within LLM context limits.
+\end{itemize}
+
+\subsection{Node 3: Domain-Aware RAG Research}
+
+For each flagged clause, the Research node retrieves the top-3 most relevant legal
+best-practice excerpts from the knowledge base. This retrieved context is injected
+into the LLM prompt to ground its reasoning in established legal standards and
+prevent hallucination.
+
+The retrieval system uses a \textbf{3-Level Fallback Stack}:
+
+\begin{enumerate}
+    \item \textbf{Level 1 --- ChromaDB domain-filtered:} Highest quality. Queries
+    the persistent vector store filtering by detected domain metadata. Embeddings
+    produced by \texttt{all-MiniLM-L6-v2} (sentence-transformers; 384 dimensions).
+    Distance metric: cosine similarity.
+
+    \item \textbf{Level 2 --- ChromaDB full-collection:} If the domain has fewer
+    results than the top-k target, the query is re-run across all domains.
+
+    \item \textbf{Level 3 --- TF-IDF Fallback:} If ChromaDB is unavailable (e.g.,
+    first cold start), an in-memory TF-IDF retriever over
+    \texttt{data/legal\_best\_practices.json} serves results using cosine similarity
+    with a topic-hint injection mechanism.
+\end{enumerate}
+
+The ChromaDB knowledge base contains \textbf{33+ domain-specific legal guidelines}
+covering all 6 domains: NDA (6 entries), Employment (6), Lease (6), SaaS (6),
+Vendor (4), and General Commercial (5).
+
+\subsection{Node 4: LLM Deep Analysis (Reason Node)}
+
+The Reason node dispatches each researched clause to a Large Language Model to
+produce an \textbf{8-field structured analysis}. Every LLM response is parsed into
+exactly the following fields:
+
+\begin{table}[h]
+\centering
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Field} & \textbf{Description} \\
+\midrule
+\texttt{plain\_english\_summary} & What the clause says at a 7th--8th grade reading level \\
+\texttt{what\_makes\_it\_risky} & Specific legal danger with a real-world consequence \\
+\texttt{who\_bears\_the\_risk} & Client / Vendor / Both / Third Party \\
+\texttt{severity\_rationale} & Why the ML model rated this clause High or Medium \\
+\texttt{industry\_standard\_practice} & What a fair, balanced version looks like \\
+\texttt{negotiation\_tips} & 2--3 specific, actionable negotiation points \\
+\texttt{safer\_rewrite} & Complete, ready-to-use formal replacement clause \\
+\texttt{action\_required} & Remove / Negotiate / Seek Legal Review / Accept with Caution \\
+\bottomrule
+\end{tabularx}
+\caption{LLM Analysis Output Schema --- 8 Structured Fields}
+\end{table}
+
+\textbf{Prompt Engineering:} The system prompt injects: (1) a ``Senior Legal Risk
+Analyst AI'' persona, (2) the detected contract domain, (3) the ML risk label and
+confidence score, (4) the retrieved RAG excerpts, and (5) strict anti-hallucination
+rules forbidding citation invention. Temperature is set to 0.15 for consistent,
+fact-grounded outputs. JSON output is enforced via
+\texttt{response\_format=\{``type'': ``json\_object''\}}.
+
+\textbf{Fault-Tolerant Parser (\texttt{safe\_parse\_analysis()}):} The JSON
+parser is designed to never raise an exception. It handles:
+\texttt{<think>...</think>} tags (Qwen/DeepSeek models), Markdown code fences
+(\texttt{```json}), invalid JSON (regex substring search and retry), complete parse
+failures (returns defaults for all 8 fields), and backward compatibility with
+older 3-key response schemas.
+
+\subsection{Cloud LLM --- 5-Level Resilient Fallback Chain}
+
+The cloud LLM client implements a 5-level fallback chain ensuring the system
+\emph{always} returns a result:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}clll@{}}
+\toprule
+\textbf{\#} & \textbf{Provider} & \textbf{API Key Required?} & \textbf{Model} \\
+\midrule
+1 & \textbf{Pollinations AI} & No (free, no key) & \texttt{openai} \\
+2 & OpenRouter (Key 1) & Yes & \texttt{openai/gpt-oss-120b} \\
+3 & OpenRouter (Key 2) & Yes & \texttt{openai/gpt-oss-120b} \\
+4 & DeepSeek via OpenRouter & Yes & \texttt{deepseek/deepseek-chat} \\
+5 & Groq & Yes (free tier) & \texttt{llama-3.3-70b-versatile} \\
+\midrule
+$\times$ & \textit{All failed} & --- & \texttt{safe\_parse\_analysis} returns defaults \\
+\bottomrule
+\end{tabular}
+\caption{Cloud LLM Fallback Chain --- Priority Order}
+\end{table}
+
+Pollinations AI (Level 1) requires \emph{no API key}, so the application works
+end-to-end out of the box, satisfying the free-tier only constraint.
+
+\subsection{Offline Mode --- Local Ollama LLM}
+
+For complete privacy, the system supports a fully local offline mode powered by
+Ollama:
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item If the Ollama daemon is not running, the system auto-starts it via
+    \texttt{subprocess.Popen(['ollama', 'serve'])}.
+    \item Polls \texttt{GET /api/tags} every 500ms for up to 10 seconds to confirm
+    readiness.
+    \item Default model: \texttt{qwen3.5:2b} --- compact, efficient, excellent JSON output.
+    \item Timeout: 180 seconds to accommodate slow first-load of quantised models on CPU.
+\end{itemize}
+
+\subsection{Report Generation}
+
+Every completed analysis produces two types of output:
+
+\begin{enumerate}
+    \item \textbf{Structured JSON Report:} Machine-readable output containing the
+    contract overview, detected domain, risk severity breakdown (High/Medium/Low
+    counts), and per-clause analysis with all 8 LLM fields, ML metadata, and RAG
+    references.
+
+    \item \textbf{PDF Report (fpdf2):} A professionally formatted PDF with a branded
+    header, per-clause colour-coded risk badges (red/amber/green), all 8 analysis
+    fields with section headers, and a legal disclaimer on every page.
+\end{enumerate}
+
+\subsection{Milestone 2 Streamlit UI Enhancements}
+
+The Milestone 2 UI adds a second tab (``AI Deep Analysis'') to the existing
+Milestone 1 dashboard, featuring:
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item Auto-detected domain badge with colour coding.
+    \item Real-time clause-by-clause streaming progress indicator.
+    \item Master-detail layout: clause list (left panel) and full analysis (right panel)
+    with risk-severity coloured borders.
+    \item JSON and PDF download buttons for the complete analysis report.
+    \item Online/Offline toggle to switch between cloud LLM and local Ollama.
+    \item RAG status pill showing ChromaDB (primary) or TF-IDF fallback (active retriever).
+\end{itemize}
+
+% =============================================================
+\section{System Architecture \& Code Structure}
+\label{sec:architecture}
+% =============================================================
+
+The repository is organised as a modular Python package:
+
+\begin{lstlisting}
+Contract-Risk-Classification/
+|-- app.py                      # Main Streamlit application
+|-- rag_setup.py                # ChromaDB vector store builder
+|-- requirements.txt            # Python dependencies
+|-- run_app.sh                  # Automated setup & launch script
+|
+|-- contract_agent/             # Core package (Milestone 2)
+|   |-- workflow.py             # LangGraph StateGraph (4 nodes)
+|   |-- core/
+|   |   |-- state.py            # AgentState TypedDict
+|   |   |-- domain.py           # Domain detection
+|   |   |-- report.py           # JSON + Markdown reports
+|   |   |-- pdf_report.py       # PDF export (fpdf2)
+|   |-- llm/
+|   |   |-- cloud.py            # 5-level LLM fallback chain
+|   |   |-- local.py            # Ollama integration
+|   |   |-- prompting.py        # Prompts + safe JSON parser
+|   |-- retrieval/
+|   |   |-- chroma.py           # ChromaDB retriever
+|   |   |-- tfidf.py            # TF-IDF fallback retriever
+|   |-- utils/
+|       |-- ml.py               # Sklearn pipeline loader
+|       |-- text.py             # clean_text, segment_clauses
+|
+|-- data/
+|   |-- legal_best_practices.json   # Static KB for TF-IDF
+|   |-- processed/processed_contracts.csv  # CUAD data (7.1 MB)
+|
+|-- models/
+|   |-- best_model.pkl          # Trained LogReg pipeline (327 KB)
+|
+|-- src/                        # Jupyter notebooks (data pipeline)
+    |-- 1_inspect.ipynb  ...  6_phase2_agent_demo.ipynb
+\end{lstlisting}
+
+% =============================================================
+\section{Deployment}
+\label{sec:deployment}
+% =============================================================
+
+The application is deployed on \textbf{Streamlit Community Cloud} at a publicly
+accessible URL, satisfying the mandatory hosting requirement (no localhost demos).
+Key deployment properties:
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item Runs the complete ML Quick Screening pipeline without external dependencies.
+    \item Automatically initialises the ChromaDB knowledge base on first run.
+    \item Uses Pollinations AI free endpoint for LLM analysis with no API keys required.
+\end{itemize}
+
+\textbf{Local Setup:}
+
+\begin{lstlisting}[language=bash]
+git clone https://github.com/ashyou09/Contract-Risk-Classification.git
+cd Contract-Risk-Classification
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python rag_setup.py          # Build ChromaDB (first run only)
+streamlit run app.py
+\end{lstlisting}
+
+% =============================================================
+\section{Evaluation Against Grading Criteria}
+\label{sec:grading}
+% =============================================================
+
+\subsection*{Milestone 1 Criteria (25\%)}
+
+\begin{table}[h]
+\centering
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Criterion} & \textbf{How Addressed} \\
+\midrule
+NLP \& ML techniques & TF-IDF (bigrams, 5000 features) + Logistic Regression. 5-fold stratified CV. F1 = 0.8859. \\
+Preprocessing \& Feature Engineering & Custom clause segmentation, case normalisation, stop-word removal, bigram TF-IDF. \\
+Evaluation metrics & Accuracy, Weighted F1, Precision, Recall, Confusion Matrix all computed. \\
+UI Usability \& Code structure & Streamlit dashboard with 6+ charts, confidence threshold slider, CSV export. Fully modular codebase. \\
+\bottomrule
+\end{tabularx}
+\caption{Milestone 1 Grading Criteria Mapping}
+\end{table}
+
+\subsection*{Milestone 2 Criteria (30\%)}
+
+\begin{table}[h]
+\centering
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Criterion} & \textbf{How Addressed} \\
+\midrule
+Agentic Reasoning \& Explainability & 8-field structured LLM output with plain-English summaries, safer rewrites, and negotiation tips. Domain-aware prompting. \\
+RAG Integration \& State Management & ChromaDB with domain-filtered queries + TF-IDF fallback. Full \texttt{AgentState} TypedDict with error propagation across 4 nodes. \\
+Ethical Awareness \& Responsible AI & Legal disclaimer on all outputs. Anti-hallucination prompt guardrails. ML confidence displayed. Offline mode for privacy. \\
+Deployment & Live public URL on Streamlit Community Cloud. Works with zero API keys via Pollinations AI. \\
+\bottomrule
+\end{tabularx}
+\caption{Milestone 2 Grading Criteria Mapping}
+\end{table}
+
+% =============================================================
+\section{Ethical Considerations \& Responsible AI}
+\label{sec:ethics}
+% =============================================================
+
+This system was built with responsible AI principles embedded by design:
+
+\begin{enumerate}[leftmargin=1.5cm]
+    \item \textbf{Legal Disclaimer:} Every output (Markdown report, JSON, PDF, and UI
+    sidebar) displays: \textit{``This report is generated by an academic AI research
+    prototype. It is NOT legal advice and may contain errors. Always consult a
+    qualified legal professional before acting on any contract clause analysis.''}
+
+    \item \textbf{Confidence Transparency:} ML confidence scores are displayed
+    alongside every risk classification, enabling users to assess model certainty
+    before acting.
+
+    \item \textbf{Anti-Hallucination Prompting:} The LLM is explicitly instructed not
+    to invent legal citations and to reference only provided RAG knowledge base
+    excerpts.
+
+    \item \textbf{Human Oversight:} The system presents analysis and evidence. All
+    final legal decisions explicitly remain with the human user.
+
+    \item \textbf{Privacy Preservation:} Offline mode (Ollama) enables complete
+    on-device processing with no data leaving the user's machine.
+
+    \item \textbf{No Over-Reliance Guardrail:} The LLM prompt explicitly forbids
+    responses consisting solely of ``consult a lawyer'' without substantive analysis.
+\end{enumerate}
+
+% =============================================================
+\section{Team Contribution}
+\label{sec:team}
+% =============================================================
+
+The workload was systematically divided across both milestones:
+
+\begin{description}[style=multiline, leftmargin=4cm]
+
+    \item[\textbf{Ashutosh Singh} \\ (2401010109)]
+    Developed the custom data preprocessing scripts responsible for parsing the CUAD
+    JSON architecture. Implemented the core risk-label mapping logic (41 classes to
+    3-tier system). Architected the base Scikit-Learn Pipeline preventing data
+    leakage, trained and evaluated all ML models, and contributed to the overarching
+    Streamlit UI dashboard structure.
+
+    \vspace{0.2cm}
+    \item[\textbf{Ranvendra Pratap} \\ \textbf{Singh} \\ (2401010373)]
+    Implemented the TF-IDF feature engineering strategy. Co-defined the pipeline
+    architecture. Designed and implemented the LangGraph StateGraph (Milestone 2),
+    the ChromaDB RAG integration, the 5-level cloud LLM fallback chain, the Ollama
+    local LLM integration, and the primary architect of the Streamlit UI for both
+    milestones.
+
+    \vspace{0.2cm}
+    \item[\textbf{Shreya Suman} \\ (2401020068)]
+    Led execution of the Scikit-Learn cross-validation pipeline. Performed Stratified
+    K-Fold evaluation to establish champion model metrics. Led the report generation
+    module (JSON, Markdown, PDF outputs) and contributed heavily to Streamlit UI
+    front-end design and integration.
+
+    \vspace{0.2cm}
+    \item[\textbf{Avishkar Meher} \\ (2401010116)]
+    Led quality assurance checks and end-to-end integration testing across both
+    milestones. Performed deployment validation on Streamlit Community Cloud.
+    Participated in code review, workflow refinement, and project documentation.
+
+\end{description}
+
+% =============================================================
+\section*{References}
+% =============================================================
+\addcontentsline{toc}{section}{References}
+
+\begin{enumerate}[leftmargin=1.5cm, label={[\arabic*]}]
+    \item Hendrycks, D., Burns, C., Chen, A., \& Ball, S. (2021). \textit{CUAD: An
+    Expert-Annotated NLP Dataset for Legal Contract Review}. arXiv:2103.06268.
+
+    \item Pedregosa, F., et al. (2011). Scikit-learn: Machine Learning in Python.
+    \textit{Journal of Machine Learning Research}, 12, 2825--2830.
+
+    \item LangChain, Inc. (2024). LangGraph: Building Stateful Multi-Actor
+    Applications with LLMs. \url{https://github.com/langchain-ai/langgraph}
+
+    \item Reimers, N., \& Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings
+    using Siamese BERT-Networks. \textit{Proceedings of EMNLP 2019}.
+
+    \item Chroma. (2024). ChromaDB: The AI-native open-source embedding database.
+    \url{https://www.trychroma.com/}
+
+    \item Lewis, P., et al. (2020). Retrieval-Augmented Generation for
+    Knowledge-Intensive NLP Tasks. \textit{Advances in NeurIPS 2020}.
+
+    \item Sparck Jones, K. (1972). A statistical interpretation of term specificity
+    and its application in retrieval. \textit{Journal of Documentation}, 28(1), 11--21.
+
+    \item Streamlit Inc. (2024). Streamlit --- The fastest way to build data apps.
+    \url{https://streamlit.io/}
+\end{enumerate}
+
+\end{document}

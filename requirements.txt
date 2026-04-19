@@ -16,6 +16,7 @@ streamlit>=1.32.0
 plotly
 altair>=5.0.0,<7.0.0
 PyPDF2
+fpdf2
 
 # ── LangGraph + LLM ───────────────────────────────────────────────────────────
 langgraph>=0.2.0
