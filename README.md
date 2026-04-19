@@ -326,6 +326,31 @@ LangGraph Agent Workflow
         ▼
 Structured JSON Report
 Markdown Executive Report
+```
+# Project Structure
+
+```text
+Contract-Risk-Classification/
+├── data/
+│   └── legal_best_practices.json
+├── models/
+│   └── best_model.pkl
+├── src/
+│   ├── preprocessing notebooks
+│   ├── training notebooks
+│   └── evaluation notebooks
+├── contract_agent/
+│   ├── workflow.py
+│   ├── cloud_client.py
+│   ├── ollama_client.py
+│   ├── kb_retriever.py
+│   ├── report.py
+│   ├── text_utils.py
+│   └── ml_utils.py
+├── app.py
+├── requirements.txt
+└── README.md
+```
 
 ## 🚀 Installation & Setup
 
@@ -364,13 +389,12 @@ chmod +x run_app.sh
 
 ## 👥 Team Contribution
 
-_(Please update these fields with your exact team members and responsibilities before submission)_
 
-- **Member 1 (Ashutosh Singh - 2401010109)**: Developed the custom data preprocessing pipeline, CUAD JSON parsing, and risk mapping logic, Scikit-learn Pipeline architecture, Trained and evaluated ML, Streamlit UI.
-- **Member 2 (Ranvendra Pratap Singh - 2401010373)**: Implemented the TF-IDF feature engineering and setup Scikit-learn Pipeline architecture, Trained and evaluated ML, Streamlit UI.
-- **Member 3 (Shreya Suman - 2401020068)**: Scikit-learn Pipeline architecture, Trained and evaluated ML models (Logistic Regression, Decision Trees), performed Cross-validation,Streamlit UI.
+- **Member 1 (Ashutosh Singh - 2401010109)**: Agent workflow, backend architecture, RAG system, Streamlit integration
+- **Member 2 (Ranvendra Pratap Singh - 2401010373)**: Offline Ollama mode, testing, deployment support.
+- **Member 3 (Shreya Suman - 2401020068)**: Report generation, executive summaries, UI logic, documentation
 
-- **Member 4 (Avishkar Meher - 2401010116)**: Contributed to quality assurance checks and supporting end-to-end integration testing. Participated in structuring and workflow refinement to ensure project readiness.
+- **Member 4 (Avishkar Meher - 2401010116)**: Utilities, preprocessing support, integration testing.
 
 ---
 
