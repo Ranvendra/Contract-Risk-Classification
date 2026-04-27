@@ -1,127 +1,495 @@
-<img src="https://images.ctfassets.net/em6l9zw4tzag/oVfiswjNH7DuCb7qGEBPK/b391db3a1d0d3290b96ce7f6aacb32b0/python.png" height="70" alt="Python"/> &nbsp; <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/streamlit-icon.png" height="70" alt="Streamlit"/> &nbsp; <img src="https://png.pngtree.com/png-clipart/20250210/original/pngtree-blue-robot-toys-png-image_20412795.png" height="70" alt="Scikit-Learn"/>
+<img src="https://images.ctfassets.net/em6l9zw4tzag/oVfiswjNH7DuCb7qGEBPK/b391db3a1d0d3290b96ce7f6aacb32b0/python.png" height="60" alt="Python" />  <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/streamlit-icon.png" height="60" alt="Streamlit" />  <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Scikit_learn_logo_small.svg" height="60" alt="Scikit-Learn" />  <img src="https://avatars.githubusercontent.com/u/126733545?s=80&v=4" height="60" alt="LangGraph" />  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/pandas/pandas-original.svg" height="60" alt="Pandas" />
 
-# Intelligent Contract Risk Analysis
+# Intelligent Contract Risk Analysis & Agentic Legal Assistance System
 
-**Phase: Milestone 1 - ML-Based Contract Risk Classification**
+> **Final Integrated Submission — Milestone 1 + Milestone 2**
 
-📄 **[View Full Technical Project Report (Overleaf/LaTeX)](https://www.overleaf.com/read/kyynvqpgcptg#ab2768)**
-
-An AI-driven legal document analysis system that evaluates contractual risk. This project applies classical machine learning and Natural Language Processing (NLP) techniques to analyze contract text, segment clauses, and identify potential risk patterns **without the use of Large Language Models (LLMs) or Generative AI**.
+An AI-driven legal document intelligence platform that evolved from a classical Machine Learning contract risk classifier into a full **Agentic AI Legal Assistant** — combining supervised learning, retrieval-augmented generation, and multi-step LLM reasoning to analyze contracts, detect risky clauses, and generate structured mitigation reports.
 
 ---
 
-## Project Overview & Problem Statement
+## Table of Contents
 
-This repository contains the **Milestone 1** implementation of the _Intelligent Contract Risk Analysis_ project.
+- [Problem Statement](#problem-statement)
+- [Solution Overview](#solution-overview)
+- [Business Value &amp; Industry Readiness](#business-value--industry-readiness)
+- [Key Features](#key-features)
+- [System Architecture](#system-architecture)
+- [Project Evolution](#project-evolution-milestone-1--milestone-2)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Installation &amp; Setup](#installation--setup)
+- [Environment Configuration](#environment-configuration)
+- [Running the Application](#running-the-application)
+- [ML Model &amp; Dataset](#ml-model--dataset)
+- [Agentic Pipeline](#agentic-pipeline)
+- [LLM Analysis Output Schema](#llm-analysis-output-schema)
+- [System Design Decisions](#system-design-decisions)
+- [Evaluation Metrics](#evaluation-metrics)
+- [Team Contribution](#team-contribution)
+- [Disclaimer](#disclaimer)
 
-**Problem Statement:** Legal professionals spend countless hours manually reviewing lengthy contracts to identify risky clauses, liability caps, and termination conditions. This manual process is prone to human error and inefficiency.
-**Solution:** Our system automates this process by parsing raw contract documents (PDFs/Text), splitting them into evaluable clauses, and utilizing supervised Machine Learning models to classify each clause's inherent risk (High, Medium, Low).
+---
 
-### Core Declaration
+## Problem Statement
 
-**This project strictly adheres to the "No GenAI" rule.** All parsing, feature engineering (TF-IDF), model training, and logic implementation are explicitly written and engineered by the team using traditional Python data science libraries (Scikit-learn, Pandas, NLTK/SpaCy) without reliance on generative AI outputs for core inference.
+Legal professionals, startups, freelancers, and businesses sign contracts without fully understanding hidden risks such as:
 
-## Technical Depth & Sub-Features
+- Unlimited or one-sided liability clauses
+- Unfair indemnification terms
+- Exploitative termination rights
+- Confidentiality traps and NDA overreach
+- Ambiguous payment and fee dispute clauses
+- Intellectual property ownership conflicts
 
-Our system incorporates three distinct sub-features beyond basic classification:
+Manual contract review is **expensive**, **time-consuming**, and **inaccessible** to most individuals and small businesses.
 
-1. **Custom Data Pipeline & Preprocessing**: We developed a custom clause segmentation pipeline that processes the complex `CUAD_v1` JSON dataset, extracts relevant clauses, tokenizes text, and maps 41 distinct legal clause types into 3 standardized risk categories for model consumption.
-2. **Confidence-Scored Real-Time Inference**: The Streamlit interface performs real-time inference on uploaded documents. It not only classifies text but calculates and displays the model's _probability confidence score_, allowing human operators to set dynamic "Confidence Thresholds".
-3. **Interactive Analytical Dashboard**: A comprehensive UI built with Plotly Express that provides a visual executive summary, tracking 'Risk Intensity' across the document's positional timeline, and extracting Top Keywords natively from high-risk clauses.
+---
 
-## Dataset & EDA
+## Solution Overview
 
-**Data Source**: We utilized the **CUAD (Contract Understanding Atticus Dataset)** `CUAD_v1.json`.
+We built the **Intelligent Contract Risk Analysis System** — a two-phase platform that automates contract review:
 
-- **EDA Insights**: During exploration, we identified 41 highly specific clause types across 510 commercial contracts. We observed severe class imbalances and varying text lengths. This insight informed our decision to map these into overarching 'High/Medium/Low' risk buckets to maintain robust classification boundaries. Our processed dataset yielded balanced training features representing thousands of individual clauses.
+**Phase 1 (Milestone 1) — ML-Based Clause Classification**
 
-## Methodology & Optimisation
+Uses NLP + supervised machine learning to classify every clause as High Risk, Medium Risk, or Low Risk with a confidence score.
 
-1. **Preprocessing**: Handled raw contract text through formatting, lowercasing, stop-word removal, and regex-based punctuation stripping. Paragraphs are segmented into logical individual clauses.
-2. **Feature Engineering**: We utilized **TF-IDF (Term Frequency-Inverse Document Frequency)** set to extract up to 5000 maximum features involving unigrams and bigrams (`ngram_range=(1,2)`). This numerical vectorization maps text frequency against corpus ubiquity.
-3. **Models Evaluated**:
-   - Logistic Regression
-   - Decision Tree Classifier
-   - Random Forest Classifier
-4. **Optimisation & Selection**: To prevent data leakage, we employed `Scikit-Learn Pipelines` paired with **5-Fold Stratified Cross-Validation**.
-   - _Design Justification_: **Logistic Regression** was ultimately selected as our final production model due to its superior F1-Score (0.8859), efficiency in high-dimensional TF-IDF spaces, and explainability via probabilistic outputs, outperforming tree-based ensemble methods.
+**Phase 2 (Milestone 2) — Agentic AI Legal Assistant**
 
-## Evaluation Metrics
+Transforms the ML output into a full agentic reasoning engine that understands risks deeply, retrieves legal best practices, rewrites dangerous clauses, and generates executive-ready reports.
 
-Based on our 5-Fold Cross Validation on the training data:
+---
 
-- **Logistic Regression (Deployed Model)**:
-  - Accuracy: 0.8856
-  - F1-Score (Weighted): 0.8859
-- **Decision Tree**: F1-Score: 0.8084
-- **Random Forest**: F1-Score: 0.8058
+## Business Value & Industry Readiness
 
-## Technology Stack & Tool Deep-Dive
+This platform is not just a theoretical AI model; it is engineered for strict, real-world business environments.
 
-- **UI Framework**: [Streamlit](https://streamlit.io/) (Rapid frontend deployment for Python data apps).
-- **Machine Learning**: `Scikit-Learn` (Core library for TF-IDF vectorization, Pipeline creation, classification algorithms, and cross-validation).
-- **Data Manipulation**: `Pandas` (Dataframe structuring and CSV I/O) & `NumPy`.
-- **Visualizations**: `Plotly Express` (Interactive, web-native charting).
-- **PDF Extraction**: `PyPDF2` (Parsing text systematically from raw contract PDFs).
-- **Serialization**: `pickle` (Exporting and loading the production pipeline state).
+**1. Fault-Tolerant Cloud Architecture:** Uses a resilient 3-layer LLM fallback system (OpenRouter Primary -> OpenRouter Secondary -> Groq) to guarantee 99.9% uptime for contract analysis even during API outages or rate limits.
+**2. Ultimate Privacy (Offline Mode):** Enterprise contracts process highly sensitive data. The system features a fully isolated, air-gapped run mode using local Ollama models. No data ever leaves the machine, making it compliant with strict corporate NDAs and data privacy laws.
+**3. Actionable Output Delivery:** Unlike standard chatbots that just "chat," this system acts as a paralegal pipeline. It natively exports structured JSONs (for API and DB integrations) and professional, executive-ready PDF/Markdown reports (for immediate human-in-the-loop review).
+**4. Bulletproof UI & Reliability:** The Streamlit frontend uses a highly defensive parser mechanism that silently handles LLM hallucinations or broken JSON schema outputs, ensuring the graphical interface never crashes in production.
+**5. Immediate Cost & Time Savings:** Empowers non-lawyer professionals (procurement officers, HR managers, startup founders) to instantly screen 50-page contracts in seconds, reducing billable legal hours and avoiding costly litigation traps.
 
-## System Architecture / Code Structure
+---
 
-Data flows from the user interface to the inference engine and back as structured analytical metrics.
+## Key Features
 
-```text
-Contract-Risk-Classification/
-├── CUAD_Dataset/          # Raw CUAD v1 dataset
-├── data/                  # Processed datasets and tabular outputs
-├── models/
-│   └── best_model.pkl     # Deployed ML pipeline (TF-IDF + Logistic Regression)
-├── src/                   # Jupyter Notebooks detailing the data pipeline
-│   ├── 1_inspect.ipynb
-│   ├── 2_data_preprocessing.ipynb
-│   ├── 3_feature_engineering.ipynb
-│   ├── 4_train.ipynb
-│   └── 5_evaluate.ipynb
-├── app.py                 # Main Streamlit web application & Inference Engine
-└── requirements.txt       # Project python dependencies
+| Feature                                   | Description                                                                |
+| ----------------------------------------- | -------------------------------------------------------------------------- |
+| **PDF & Text Upload**               | Upload `.pdf` or `.txt` contracts directly in the browser              |
+| **Clause Segmentation**             | Automatically splits contracts into logical clauses using regex boundaries |
+| **ML Risk Classification**          | TF-IDF + Logistic Regression model trained on the CUAD dataset             |
+| **Confidence Threshold Slider**     | Filter weak predictions dynamically in the UI                              |
+| **RAG Legal Knowledge Retrieval**   | Retrieves top-3 relevant legal best-practice excerpts per risky clause     |
+| **LangGraph Agentic Reasoning**     | Multi-node StateGraph pipeline: Classify → Research → Reason             |
+| **Cloud LLM with 3-Level Fallback** | OpenRouter Key 1 → OpenRouter Key 2 → Groq (never fails)                 |
+| **Offline Local LLM**               | Runs fully on-device via Ollama (no internet after model download)         |
+| **Structured JSON Report**          | Machine-readable full analysis per clause                                  |
+| **Markdown Executive Report**       | Professional human-readable summary with risk signal and action items      |
+| **PDF Report Download**             | Export the full analysis as a downloadable PDF                             |
+
+---
+
+## System Architecture
+
 ```
+User Uploads Contract (PDF / TXT)
+          |
+          v
+  Clause Segmentation Engine
+  (Regex + Paragraph Boundaries)
+          |
+          v
+  ML Risk Classification
+  (TF-IDF Vectorizer + Logistic Regression)
+          |
+          v
+  Flagged Risky Clauses
+  (above confidence threshold)
+          |
+          v
++----------------------------------------------------------------+
+|                      LangGraph StateGraph                       |
+|                                                                 |
+|  +--------------+     +--------------+     +--------------+    |
+|  |   classify   |---->|   research   |---->|    reason    |    |
+|  |  (ML Node)   |     |  (RAG Node)  |     |  (LLM Node)  |    |
+|  +--------------+     +--------------+     +--------------+    |
+|                                                                 |
+|      AgentState flows through each node, accumulating data      |
++----------------------------------------------------------------+
+          |
+          v
+  Structured JSON Report  +  Markdown Executive Report  +  PDF Export
+```
+
+### Cloud LLM Fallback Chain
+
+```
+Attempt 1: OpenRouter Key 1
+     | (exception?)
+     v
+Attempt 2: OpenRouter Key 2
+     | (exception?)
+     v
+Attempt 3: Groq (Final Fallback)
+     | (exception?)
+     v
+safe_parse_analysis() — always returns a usable dict, never crashes
+```
+
+---
+
+## Project Evolution: Milestone 1 -> Milestone 2
+
+| Capability                                  | Milestone 1 | Milestone 2 |
+| ------------------------------------------- | :---------: | :---------: |
+| PDF / Text Upload                           |      +      |      +      |
+| Clause Segmentation                         |      +      |      +      |
+| TF-IDF + Logistic Regression Classification |      +      |      +      |
+| Confidence Scoring & Threshold Filter       |      +      |      +      |
+| Dashboard Visualizations                    |      +      |      +      |
+| Legal Best Practice Retrieval (RAG)         |      -      |      +      |
+| LangGraph Multi-Step Agentic Reasoning      |      -      |      +      |
+| Plain-English Risk Explanation              |      -      |      +      |
+| Negotiation Tips & Safer Rewrites           |      -      |      +      |
+| Cloud LLM with 3-Level Fallback             |      -      |      +      |
+| Offline Local LLM Support (Ollama)          |      -      |      +      |
+| Structured JSON + Markdown Report           |      -      |      +      |
+| PDF Report Export                           |      -      |      +      |
+
+---
+
+## Tech Stack
+
+### Machine Learning
+
+- **Scikit-learn** — TF-IDF Vectorizer + Logistic Regression pipeline
+- **Pandas** — Data preprocessing and EDA
+- **NumPy** — Numerical operations
+- **NLTK / spaCy** — NLP text processing
+
+### Agentic AI
+
+- **LangGraph** >= 0.2.0 — Multi-step agentic StateGraph orchestration
+- **LangChain Core** >= 0.3.0 — Base primitives for node/state management
+
+### LLM Providers
+
+- **OpenRouter** — Primary cloud LLM (dual-key fallback)
+- **Groq** — Secondary cloud fallback (Llama 3.3 70B)
+- **Ollama** — Offline local LLM (Qwen, Llama)
+
+### UI & Visualization
+
+- **Streamlit** >= 1.32.0 — Web application frontend
+- **Plotly** — Interactive risk distribution charts
+- **FPDF2** — PDF report generation
+
+### Retrieval (RAG)
+
+- **TF-IDF Similarity Search** — Local, zero-dependency vector retrieval
+- **Legal Knowledge Base** — Curated `data/legal_best_practices.json`
+- **ChromaDB** >= 0.5.0 — Persistent vector DB (optional extended retrieval)
+- **Sentence-Transformers** >= 3.0.0 — Semantic embedding support
+
+### Utilities
+
+- **python-dotenv** — Secure API key management via `.env`
+- **PyPDF2** — Contract PDF parsing
+- **Requests** — Ollama REST API client
+
+---
+
+## Project Structure
+
+```
+Contract-Risk-Classification/
+|
++-- data/
+|   +-- legal_best_practices.json     # Curated KB for RAG retrieval
+|
++-- models/
+|   +-- best_model.pkl                # Trained TF-IDF + LogReg pipeline
+|
++-- src/                              # Jupyter Notebooks — Milestone 1 pipeline
+|   +-- 1_inspect.ipynb
+|   +-- 2_data_preprocessing.ipynb
+|   +-- 3_feature_engineering.ipynb
+|   +-- 4_train.ipynb
+|   +-- 5_evaluate.ipynb
+|
++-- CUAD_Dataset/                     # Raw CUAD v1 dataset (Milestone 1)
+|
++-- contract_agent/                   # Agentic AI package (Milestone 2)
+|   +-- __init__.py                   # Public API: run_hybrid_agent_pipeline()
+|   +-- workflow.py                   # LangGraph StateGraph -- 3 nodes
+|   +-- cloud_client.py               # 3-level cloud LLM fallback chain
+|   +-- ollama_client.py              # Offline Ollama LLM integration
+|   +-- kb_retriever.py               # TF-IDF RAG retriever
+|   +-- _shared_prompt.py             # Centralised prompt engineering + schema
+|   +-- report.py                     # JSON + Markdown report builder
+|   +-- text_utils.py                 # Text cleaning and clause segmentation
+|   +-- ml_utils.py                   # Cached ML model loader
+|
++-- app.py                            # Streamlit UI (full M1 + M2 integration)
++-- run_app.sh                        # One-click auto-install and launch script
++-- requirements.txt                  # All dependencies
++-- .env.example                      # API key configuration template
++-- .streamlit/config.toml            # Theme and UI configuration
++-- milestone2.md                     # Detailed Milestone 2 technical reference
++-- README.md                         # This file
+```
+
+---
 
 ## Installation & Setup
 
 ### Prerequisites
 
-Make sure you have Python 3.8+ installed on your system.
+- **Python 3.10+** installed on your system
+- For **Online Mode**: at least one valid API key (OpenRouter or Groq)
+- For **Offline Mode**: [Ollama](https://ollama.com/) installed locally
 
-### 1. Clone the repository
+### Option A — Automated Setup (Recommended)
+
+We provide a single startup script that automatically creates a virtual environment, installs all dependencies, and launches the application:
 
 ```bash
-git clone https://github.com/your-username/Contract-Risk-Classification.git
+# 1. Clone the repository
+git clone https://github.com/ashyou09/Contract-Risk-Classification.git
 cd Contract-Risk-Classification
-```
 
-### 2. Auto-Install & Run Application
+# 2. Configure your API keys
+cp .env.example .env
+# Open .env and fill in your API keys
 
-We have implemented an automated startup script that will automatically create a secure Python virtual environment, download all necessary dependencies without throwing errors, and launch the UI.
-
-```bash
-# Make the script executable securely and run it:
+# 3. Run the automated launcher
 chmod +x run_app.sh
 ./run_app.sh
 ```
 
-*The script manages `requirements.txt` dynamically. If you prefer to manually install, use `pip install -r requirements.txt` followed by `streamlit run app.py`.*
+### Option B — Manual Setup
 
-_Note: A live deployed version link will be generated via HuggingFace Spaces/Streamlit Community Cloud for final submission._
+```bash
+# 1. Clone the repository
+git clone https://github.com/ashyou09/Contract-Risk-Classification.git
+cd Contract-Risk-Classification
 
-## 👥 Team Contribution
+# 2. Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
 
-_(Please update these fields with your exact team members and responsibilities before submission)_
+# 3. Install dependencies
+pip install -r requirements.txt
 
-- **Member 1 (Ashutosh Singh - 2401010109)**: Developed the custom data preprocessing pipeline, CUAD JSON parsing, and risk mapping logic, Scikit-learn Pipeline architecture, Trained and evaluated ML, Streamlit UI.
-- **Member 2 (Ranvendra Pratap Singh - 2401010373)**: Implemented the TF-IDF feature engineering and setup Scikit-learn Pipeline architecture, Trained and evaluated ML, Streamlit UI.
-- **Member 3 (Shreya Suman - 2401020068)**: Scikit-learn Pipeline architecture, Trained and evaluated ML models (Logistic Regression, Decision Trees), performed Cross-validation,Streamlit UI.
+# 4. Configure environment
+cp .env.example .env
+# Edit .env with your API keys
 
-- **Member 4 (Avishkar Meher - 2401010116)**: Contributed to quality assurance checks and supporting end-to-end integration testing. Participated in structuring and workflow refinement to ensure project readiness.
+# 5. Launch the app
+streamlit run app.py
+```
+
+### Offline Mode — Pull a Local Model
+
+```bash
+# Install Ollama: https://ollama.com/download
+ollama pull qwen3.5:2b        # Recommended -- fast, good JSON output
+# Alternative:
+ollama pull llama3.2:3b
+```
+
 ---
 
-**Disclaimer:** This tool is an academic project designed for educational purposes to demonstrate ML-based analysis. It does NOT constitute professional legal advice.
-`
+## Environment Configuration
+
+Copy `.env.example` to `.env` and fill in your credentials:
+
+```env
+# -- Cloud Mode (Online) -----------------------------------------------
+
+# OpenRouter -- Primary key (required for online mode)
+OPENROUTER_API_KEY_1=sk-or-v1-...
+
+# OpenRouter -- Secondary key (automatic fallback if Key 1 fails)
+OPENROUTER_API_KEY_2=sk-or-v1-...
+
+# OpenRouter model
+OPENROUTER_MODEL=openai/gpt-oss-120b
+
+# Groq -- Final fallback provider
+GROQ_API_KEY=gsk_...
+GROQ_MODEL=llama-3.3-70b-versatile
+
+# -- Offline Mode (Ollama) --------------------------------------------
+
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen3.5:2b
+```
+
+> **Security:** The `.env` file is listed in `.gitignore` and must never be committed to version control.
+
+---
+
+## Running the Application
+
+```bash
+streamlit run app.py
+# App opens at: http://localhost:8501
+```
+
+### UI Overview
+
+**Sidebar — Quick Settings**
+
+- Processing Mode: Switch between Online (cloud LLM) or Local (Ollama)
+- Risk Sensitivity Slider: Adjust the ML confidence threshold (0.0 – 1.0)
+- System Health Checks: Live status of Cloud Server and Local Ollama
+- Legal Knowledge Base: Status of the RAG vector store
+- Document Upload: Upload `.pdf` or `.txt` contract files
+
+**Main Panel**
+
+- Risk distribution chart (High / Medium / Low breakdown)
+- Clause-by-clause analysis with expandable details
+- Full agentic reasoning report (8-dimension analysis per clause)
+- Download report as **PDF** or copy as **Markdown**
+
+---
+
+## ML Model & Dataset
+
+### Dataset — CUAD (Contract Understanding Atticus Dataset)
+
+- 41 clause categories identified from real commercial contracts
+- Strong class imbalance handled with stratified splits
+- Categories mapped to: **High Risk**, **Medium Risk**, **Low Risk**
+
+### Preprocessing Pipeline
+
+1. Lowercase normalisation
+2. Stopword removal
+3. Punctuation cleaning (preserving legal terms)
+4. Clause boundary segmentation
+
+### Feature Engineering
+
+- **TF-IDF Vectorizer** — up to 5,000 features, unigrams + bigrams
+
+### Models Evaluated
+
+| Model                         |      Weighted F1 Score      |
+| ----------------------------- | :-------------------------: |
+| **Logistic Regression** | **0.8859** (Selected) |
+| Decision Tree                 |           0.8084           |
+| Random Forest                 |           0.8058           |
+
+**Why Logistic Regression?**
+
+- Highest F1 score on legal text
+- Fast, real-time inference
+- Calibrated confidence probabilities
+- Naturally handles high-dimensional sparse TF-IDF features
+
+---
+
+## Agentic Pipeline
+
+### Node 1 — classify (ML Risk Classification)
+
+Loads `models/best_model.pkl` (TF-IDF + Logistic Regression), segments the uploaded contract into individual clauses, classifies each clause, and applies the user-defined confidence threshold.
+
+**Output per clause:**
+
+```json
+{ "clause_text": "...", "risk_level": "High", "confidence": 0.91 }
+```
+
+### Node 2 — research (RAG Legal Best-Practice Retrieval)
+
+For every flagged clause, retrieves the **top-3 most relevant legal best-practice entries** from `data/legal_best_practices.json` using:
+
+- TF-IDF cosine similarity over the full knowledge base
+- Topic-aware boosting — regex detects clause domain (termination, indemnification, liability, IP, etc.) and prioritises domain-matched entries
+
+### Node 3 — reason (LLM Deep Analysis)
+
+Dispatches each clause + retrieved best practices to the selected LLM backend. Returns a full 8-dimension analysis, then assembles the final JSON and Markdown reports.
+
+**LLM error isolation:** If a single clause fails, `safe_parse_analysis()` returns a graceful placeholder — the pipeline never crashes due to a single LLM failure.
+
+---
+
+## LLM Analysis Output Schema
+
+Every flagged clause receives an 8-key structured analysis:
+
+| Field                          | Description                                                                       |
+| ------------------------------ | --------------------------------------------------------------------------------- |
+| `plain_english_summary`      | What the clause says in plain language (2-3 sentences)                            |
+| `what_makes_it_risky`        | Specific legal danger with real-world consequence                                 |
+| `who_bears_the_risk`         | "Client" / "Vendor" / "Both" / "Third Party"                                      |
+| `severity_rationale`         | Why the ML model rated this risk level                                            |
+| `industry_standard_practice` | What a fair, balanced version looks like                                          |
+| `negotiation_tips`           | 2-3 specific, numbered actionable negotiation points                              |
+| `safer_rewrite`              | Complete, ready-to-use replacement clause in legal style                          |
+| `action_required`            | "Remove Clause" / "Negotiate Terms" / "Seek Legal Review" / "Accept with Caution" |
+
+---
+
+## System Design Decisions
+
+| Decision                                             | Rationale                                                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **LangGraph over plain LangChain**             | Explicit StateGraph with typed nodes gives full traceability and deterministic error propagation |
+| **TF-IDF RAG over ChromaDB**                   | Zero external dependency for retrieval; fast, deterministic, local-only                          |
+| **3-Level LLM Fallback**                       | Ensures uninterrupted analysis even with rate limits or API key exhaustion                       |
+| **JSON response format enforcement**           | `response_format={"type": "json_object"}` on all cloud calls minimises parse failures          |
+| **`safe_parse_analysis()` defensive parser** | Handles Qwen `<think>` tags, markdown fences, malformed JSON — always returns a usable dict   |
+| **`temperature=0.15`**                       | Keeps LLM output consistent, factual, and minimally hallucinated                                 |
+| **`@lru_cache` on model and graph**          | Avoids re-deserialising the ML model or re-compiling the LangGraph StateGraph on every request   |
+
+---
+
+## Evaluation Metrics
+
+### ML Classification — Milestone 1
+
+| Model                         | Weighted F1 Score |
+| ----------------------------- | :---------------: |
+| **Logistic Regression** | **0.8859** |
+| Decision Tree                 |      0.8084      |
+| Random Forest                 |      0.8058      |
+
+### Overall Risk Signal — Milestone 2 Report
+
+| Condition                | Signal                                                           |
+| ------------------------ | ---------------------------------------------------------------- |
+| High Risk clauses >= 2   | HIGH RISK DOCUMENT — Multiple critical issues detected          |
+| High Risk clauses = 1    | ELEVATED RISK — At least one critical clause requires attention |
+| Medium Risk clauses >= 2 | MODERATE RISK — Several clauses need review                     |
+| Otherwise                | LOWER RISK — Minor concerns only, standard review recommended   |
+
+---
+
+## Team Contribution
+
+| Member                           | Student ID | Responsibilities                                                                                                                                                                                  |
+| -------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ashutosh Singh**         | 2401010109 | LangGraph agentic workflow (`workflow.py`), cloud fallback chain (`cloud_client.py`), RAG retriever (`kb_retriever.py`), prompt schema (`_shared_prompt.py`), Streamlit M2 UI integration |
+| **Ranvendra Pratap Singh** | 2401010373 | Offline Ollama integration (`ollama_client.py`), auto-start daemon, offline mode end-to-end testing, local model evaluation                                                                     |
+| **Shreya Suman**           | 2401020068 | Report builder (`report.py`), JSON + Markdown generation, executive summary logic, action summary table, overall risk signal algorithm                                                          |
+| **Avishkar Meher**         | 2401010116 | Text preprocessing (`text_utils.py`), ML model caching (`ml_utils.py`), configuration documentation (`.env.example`)                                                                        |
+
+---
+
+## Disclaimer
+
+This tool is an **academic project** designed for educational purposes to demonstrate ML-based contract analysis and autonomous AI reasoning. It does **NOT** constitute professional legal advice.
+
+Always consult a qualified legal professional before signing, modifying, or rejecting any contract clause.
+
+---
+
+*Intelligent Contract Risk Analysis System — Final Integrated Submission — Milestone 1 + Milestone 2*

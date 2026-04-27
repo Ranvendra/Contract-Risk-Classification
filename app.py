@@ -1,5 +1,9 @@
 import json
 import os
+
+# Fix for ChromaDB/Protobuf descriptor errors on modern Python versions
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 import re
 from io import BytesIO, StringIO
 
@@ -7,6 +11,7 @@ import pandas as pd
 import plotly.express as px
 import PyPDF2
 import streamlit as st
+import streamlit.components.v1 as components
 from dotenv import load_dotenv
 
 from contract_agent.core.domain import DOMAIN_META, detect_domain, get_domain_badge_html
@@ -21,6 +26,48 @@ st.set_page_config(
     page_title="Contract Risk Analyzer",
     layout="wide",
     initial_sidebar_state="expanded",
+)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Theme Detector
+# ─────────────────────────────────────────────────────────────────────────────
+components.html(
+    """
+    <script>
+    function updateTheme() {
+        const parentDoc = window.parent.document;
+        const bodyColor = parentDoc.defaultView.getComputedStyle(parentDoc.body).color;
+        const isLight = bodyColor === 'rgb(49, 51, 63)' || bodyColor === 'rgb(0, 0, 0)' || bodyColor === 'black';
+        
+        if (isLight) {
+            if (!parentDoc.body.classList.contains('custom-light-sidebar')) {
+                parentDoc.body.classList.add('custom-light-sidebar');
+            }
+            // Aggressively hunt and fix the file uploader backgrounds in the sidebar
+            const sidebar = parentDoc.querySelector('[data-testid="stSidebar"]');
+            if (sidebar) {
+                const uploaders = sidebar.querySelectorAll('[data-testid="stFileUploader"], [data-testid="stFileUploadDropzone"]');
+                uploaders.forEach(upl => {
+                    upl.style.setProperty('background-color', '#000033', 'important');
+                    upl.style.setProperty('border-color', 'rgba(255,255,255,0.2)', 'important');
+                    const contents = upl.querySelectorAll('div, section, small');
+                    contents.forEach(c => {
+                        c.style.setProperty('background-color', 'transparent', 'important');
+                    });
+                });
+            }
+        } else {
+            if (parentDoc.body.classList.contains('custom-light-sidebar')) {
+                parentDoc.body.classList.remove('custom-light-sidebar');
+            }
+        }
+    }
+    setInterval(updateTheme, 500);
+    setTimeout(updateTheme, 50);
+    </script>
+    """,
+    height=0,
+    width=0,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -192,8 +239,93 @@ details.custom-expander[open] summary .expand-icon {
     font-size: 0.95rem;
     line-height: 1.6;
 }
+
+/* ── White Theme Overrides (Requested) ── */
+/* Sidebar styling: dark navy background */
+.custom-light-sidebar [data-testid="stSidebar"] > div:first-child,
+.custom-light-sidebar [data-testid="stSidebar"] {
+    background-color: #000033 !important;
+}
+
+/* Bulletproof text whitelisting inside the sidebar */
+.custom-light-sidebar [data-testid="stSidebar"] * {
+    color: #e2e8f0 !important;
+}
+
+/* Sidebar expander fix to match the dark navy theme */
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stExpander"] details,
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stExpander"] summary,
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stExpanderDetails"] {
+    background-color: rgba(0, 0, 51, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stExpander"] svg {
+    fill: #e2e8f0 !important;
+    stroke: #e2e8f0 !important;
+}
+
+/* Sidebar File Uploader fix - total coverage */
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploader"],
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploader"] > section,
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"],
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] div,
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] section {
+    background-color: #000033 !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Force all text inside the uploader to light gray */
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploader"] *,
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploader"] small,
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploader"] span {
+    color: #e2e8f0 !important;
+}
+
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploader"] svg,
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploader"] svg * {
+    fill: #ffffff !important;
+    stroke: #ffffff !important;
+}
+
+.custom-light-sidebar [data-testid="stSidebar"] [data-testid="stFileUploader"] button {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+}
+
+/* Protect inline pill text color */
+.custom-light-sidebar [data-testid="stSidebar"] .rag-chroma {
+    color: #065f46 !important;
+}
+.custom-light-sidebar [data-testid="stSidebar"] .rag-tfidf {
+    color: #92400e !important;
+}
+
+/* Sidebar buttons */
+.custom-light-sidebar [data-testid="stSidebar"] button {
+    color: #ffffff !important;
+    border-color: rgba(255,255,255,0.2) !important;
+    background-color: rgba(255,255,255,0.05) !important;
+}
+.custom-light-sidebar [data-testid="stSidebar"] button:hover {
+    background-color: rgba(255,255,255,0.1) !important;
+    border-color: rgba(255,255,255,0.5) !important;
+}
+
+/* Radio button text fix */
+.custom-light-sidebar [data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] p {
+    color: #f1f5f9 !important;
+}
+
+/* Main Heading: Remove gradient in light theme */
+.custom-light-sidebar .main-title {
+    background: none !important;
+    -webkit-text-fill-color: #0f172a !important;
+    color: #0f172a !important;
+    text-fill-color: #0f172a !important;
+}
 </style>
-""", unsafe_allow_html=True)
+""",unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -767,7 +899,7 @@ def main():
     # ── Header ────────────────────────────────────────────────────────────────
     st.markdown("""
     <div style='text-align:center; padding:2rem 0 1rem;'>
-        <h1 style='font-size:3rem; font-weight:800;
+        <h1 class='main-title' style='font-size:3rem; font-weight:800;
             background:linear-gradient(90deg,#3B82F6,#818CF8,#3B82F6);
             -webkit-background-clip:text; -webkit-text-fill-color:transparent;
             margin-bottom:.5rem;'>
